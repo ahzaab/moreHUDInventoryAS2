@@ -1,0 +1,8 @@
+﻿
+intrinsic class skse.plugins.AHZmoreHUDInventory
+{
+	static function InstallHooks():Void;
+	static function ShowBookRead():Boolean;
+	static function AHZLog(data:String, isReleaseMode:Boolean):Void;
+	static function GetCurrentMenu():String;
+}
