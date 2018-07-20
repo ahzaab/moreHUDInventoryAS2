@@ -26,6 +26,8 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     private var isSkyui:Boolean = false;
     private var _platform: Number;
     private var _currentMenu: String;
+	private var _equipHand: Number;
+	private var iSelectedCategory: Number;
 
     // Statics
     private static var hooksInstalled:Boolean = false;
@@ -73,15 +75,30 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             // Apply hooks to hook events
             hookFunction(_root.Menu_mc, "UpdateItemCardInfo", this, "UpdateItemCardInfo");
             
-            // Only need to hook these functions for the inventory and container menus
-            // because they are the only menus that a book can be read from
-            if (_currentMenu == "InventoryMenu" || _currentMenu == "ContainerMenu")
-            {
+			// For SkuUI the startItemEquip	is called when the shift button is held down
+			// This is the only time a book can be read in the container menu for SkyUI
+			if (_currentMenu == "ContainerMenu" && isSkyui)
+			{
+				hookFunction(_root.Menu_mc, "startItemEquip", this, "startItemEquip");	
+			}
+			
+			// For Inventory Menu needed to invalidate "Rook Read"
+			if (_currentMenu == "InventoryMenu" && isSkyui)
+			{
                 hookFunction(_root.Menu_mc, "onItemSelect", this, "onItemSelect");
                 hookFunction(_root.Menu_mc, "AttemptEquip", this, "AttemptEquip");
                 hookFunction(_root.Menu_mc, "SetPlatform", this, "SetPlatform");
-            }
-                         
+			}					
+					
+			// For Used for Vanilla to check the book read status		
+			if (_currentMenu == "InventoryMenu" || _currentMenu == "ContainerMenu" && !isSkyui)
+			{
+                hookFunction(_root.Menu_mc, "onItemSelect", this, "onItemSelect");
+                hookFunction(_root.Menu_mc, "AttemptEquip", this, "AttemptEquip");
+                hookFunction(_root.Menu_mc, "SetPlatform", this, "SetPlatform");
+				hookFunction(_root.Menu_mc, "onShowItemsList", this, "onShowItemsList");
+			}						
+					
             _global.skse.plugins.AHZmoreHUDInventory.InstallHooks();
             hooksInstalled = true;
         }
@@ -162,8 +179,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     {
         if (_currentMenu != "InventoryMenu" && _currentMenu != "ContainerMenu")
             return;	
-        
-        _global.skse.plugins.AHZmoreHUDInventory.AHZLog("CheckBook", false);		
+       
         var entryList:Object;
         var selectedIndex:Number;
         var type:Number;
@@ -175,6 +191,9 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         }
         else //Vanilla
         {
+			//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("bShowEquipButtonHelp" + _root.Menu_mc.bShowEquipButtonHelp, false);		
+			//_root.Menu_mc.bShowEquipButtonHelp
+			
             entryList = _root.Menu_mc.InventoryLists_mc._ItemsList.EntriesA;
             selectedIndex = _root.Menu_mc.InventoryLists_mc._ItemsList.iSelectedIndex;		
         }	
@@ -184,6 +203,8 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         if (type != ICT_BOOK || _global.skse == null)
             return;
             
+        _global.skse.plugins.AHZmoreHUDInventory.AHZLog("--.CheckBook", false);					
+			
         entryList[selectedIndex].flags |= BOOKFLAG_READ;
         UpdateItemCardInfo(itemCard.itemInfo);	
     }
@@ -193,12 +214,23 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     {
         if (_currentMenu != "InventoryMenu" && _currentMenu != "ContainerMenu")
             return;
-            
-        if (!event.entry.enabled)
+        
+		// Vanilla does a transfer bby default if the shift key is not held down
+		// (_root.Menu_mc.bShowEquipButtonHelp == false)
+		if (!isSkyui)
+		{
+			// If a transfer is occuring in the vanilla menu
+			if (isViewingContainer() && _root.Menu_mc.bShowEquipButtonHelp == false)
+			{
+				return;
+			}
+		}
+		
+        if (!event.entry.enabled && event.keyboardOrMouse == 0)
         {
             return;
         }
-        _global.skse.plugins.AHZmoreHUDInventory.AHZLog("onItemSelect", false);	
+        _global.skse.plugins.AHZmoreHUDInventory.AHZLog("-->onItemSelect", false);	
         CheckBook();
     }
 
@@ -207,8 +239,19 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     {
         if (_currentMenu != "InventoryMenu" && _currentMenu != "ContainerMenu")
             return;
-        
-        _global.skse.plugins.AHZmoreHUDInventory.AHZLog("AttemptEquip", false);			
+        						
+		// Vanilla does a transfer bby default if the shift key is not held down
+		// (_root.Menu_mc.bShowEquipButtonHelp == false)								
+		if (!isSkyui)
+		{
+			// If a transfer is occuring in the vanilla menu
+			if (isViewingContainer() && _root.Menu_mc.bShowEquipButtonHelp == false)
+			{
+				return;
+			}
+		}								
+								
+        _global.skse.plugins.AHZmoreHUDInventory.AHZLog("-->AttemptEquip", false);			
         var processInput: Boolean = a_bCheckOverList == undefined ? true : a_bCheckOverList;
         
         if (isSkyui)
@@ -225,10 +268,71 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         }
         CheckBook();
     }
+	
+	// Extra hook needed to set the iSelectedCategory in vanilla
+	function onShowItemsList(event: Object): Void
+	{
+		if (!isSkyui)
+		{
+			iSelectedCategory = _root.Menu_mc.InventoryLists_mc.CategoriesList.selectedIndex;
+		}
+	}	
+	
+	// Retruns true if in the non-player side of the container menu
+	private function isViewingContainer(): Boolean
+	{
+		var isInViewContainer:Boolean;
+		if (_currentMenu != "ContainerMenu") 
+		{
+			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("NOT IN VIEWING MENU", false);		
+			return false;
+		}
+		
+		if (isSkyui)
+		{
+			isInViewContainer =  (_root.Menu_mc.inventoryLists.categoryList.activeSegment == 0);
+		}
+		else
+		{
+			var dividerIdx: Number = _root.Menu_mc.InventoryLists_mc.CategoriesList.dividerIndex;
+			isInViewContainer =  dividerIdx != undefined && iSelectedCategory < dividerIdx;
+		}
+		
+		if (isInViewContainer)
+		{
+			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("IN VIEWING MENU", false);		
+		}
+		else
+		{
+			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("NOT IN VIEWING MENU", false);		
+		}
+		
+		
+		return  isInViewContainer;
+	}	
 
+	// On Quantity Menu select in container menu
+	private function onQuantityMenuSelect(event: Object): Void
+	{
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("-->onQuantityMenuSelect", false);	
+		if (_equipHand != undefined) {
+			CheckBook()
+			_equipHand = undefined;
+			return;
+		}
+	}
+	
+	// Start Item Equip in container menu
+	private function startItemEquip(a_equipHand: Number): Void
+	{
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("-->startItemEquip", false);	
+		CheckBook();
+	}
+
+	// A hook to update the item card with extended items
     function UpdateItemCardInfo(aUpdateObj: Object): Void
     {
-        _global.skse.plugins.AHZmoreHUDInventory.AHZLog("UpdateItemCardInfo", false);
+        _global.skse.plugins.AHZmoreHUDInventory.AHZLog("-->UpdateItemCardInfo", false);
         var entryList:Object;
         var selectedIndex:Number;
         var type:Number;
