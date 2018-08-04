@@ -6,20 +6,14 @@ import flash.geom.Transform;
 import flash.geom.ColorTransform;
 import flash.geom.Matrix;
 
-
 class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 {
     //Widgets
     public var iconHolder: TextField
-    public var itemCard: Object;
+    public var itemCard: MovieClip;
 
     // Public vars
-    public static var ICT_BOOK: Number				= 4;
-    public static var BOOKFLAG_READ: Number			= 0x08;
-    public static var ICT_ARMOR: Number				= 1;
-    public static var ICT_WEAPON: Number			= 2;
-    static var SHOW_PANEL = 1;
-    
+
     // Options
         
     // private variables
@@ -28,16 +22,44 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     private var _currentMenu: String;
 	private var _equipHand: Number;
 	private var iSelectedCategory: Number;
+	private var originalWidth:Number;
+	private var originalX:Number;
+	private var newWidth:Number;
+	private var newX:Number;
+	private var prevHeight:Number;
+	private var itemCardWidth:Number;
+	private var _lastFrame:Number = -1;
+	private var _itemCardOverride:Boolean = false;
 
     // Statics
     private static var hooksInstalled:Boolean = false;
+	private static var AHZ_XMargin:Number = 15;
+	private static var AHZ_YMargin:Number = 0;
+	private static var AHZ_FontScale:Number = 0.90;
+
+	private static var ICT_BOOK: Number				= 4;
+    private  static var BOOKFLAG_READ: Number		= 0x08;
+    private static var ICT_ARMOR: Number			= 1;
+    private static var ICT_WEAPON: Number			= 2;
+    private static var SHOW_PANEL 					= 1;
+
+	private static var AHZ_ICF_WEAPONS_ENCH:Number = 10;
+	private static var AHZ_ICF_ARMOR_ENCH:Number = 30;
+	private static var AHZ_ICF_POTION:Number = 40;
+	private static var AHZ_ICF_INGR:Number = 50;
+	private static var AHZ_ICF_BOOKS:Number = 80;
+	private static var AHZ_ICF_MAGIC:Number = 90;
+
 
     /* INITIALIZATION */
         
     public function AHZmoreHUDInventory()
     {
         super();	
-        
+		
+		this._parent.swapDepths(_root.Menu_mc);
+        this._alpha = 0;
+		
         _currentMenu = _global.skse.plugins.AHZmoreHUDInventory.GetCurrentMenu();
         
         // Snieak in the main menu and enable extended data before any inventory menu can load
@@ -74,7 +96,6 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         {
             // Apply hooks to hook events
             hookFunction(_root.Menu_mc, "UpdateItemCardInfo", this, "UpdateItemCardInfo");
-            
 			// For SkuUI the startItemEquip	is called when the shift button is held down
 			// This is the only time a book can be read in the container menu for SkyUI
 			if (_currentMenu == "ContainerMenu" && isSkyui)
@@ -99,11 +120,13 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 				hookFunction(_root.Menu_mc, "onShowItemsList", this, "onShowItemsList");
 			}						
 					
-            _global.skse.plugins.AHZmoreHUDInventory.InstallHooks();
+            _global.skse.plugins.AHZmoreHUDInventory.InstallHooks();	
             hooksInstalled = true;
+			
         }
-                
-        iconHolder.verticalAlign = "center";
+ 
+ 		// Creation the text ield that holds the extra data
+		iconHolder.verticalAlign = "center";
         iconHolder.textAutoSize = "fit";
         iconHolder.multiLine = false;
 
@@ -114,8 +137,148 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         tf.font = "$EverywhereMediumFont";
         iconHolder.setNewTextFormat(tf);
 
-        iconHolder.text = "No IconSource";					
+        iconHolder.text = "No IconSource";		
+				
+		if (isSkyui)
+		{
+			newWidth = this._width;
+			originalX = itemCard["background"]._x;	
+			originalWidth = itemCard["background"]._width;
+			newX = (originalX - (newWidth - originalWidth)) / 2;				
+			itemCardWidth = itemCard._width;
+				
+			// Start monitoring the frames
+			this.onEnterFrame = ItemCardOnEnterFrame;
+		}
     }
+
+	function ItemCardOnEnterFrame(): Void 
+	{	
+		if (itemCard._currentframe != _lastFrame)
+		{
+			_lastFrame = itemCard._currentframe;
+			AdjustItemCard(_lastFrame);
+		}
+		
+		if (itemCard._alpha == 0)
+		{
+			this._alpha = 0;
+		}
+		else
+		{
+			if (_itemCardOverride)
+			{
+				this._alpha = 60;
+				itemCard["background"]._alpha = 0;	
+			}
+			else
+			{
+				this._alpha = 0;
+				//itemCard["background"]._alpha = 60;	
+			}
+		}
+	}
+
+	function stringReplace(block:String, findStr:String, replaceStr:String):String
+	{
+		return block.split(findStr).join(replaceStr);
+	}
+
+	function ShrinkToFit(tf:TextField):Void
+	{
+		tf.multiline = true;
+		tf.wordWrap = true	
+		//tf.invalidate();		
+		var tfText:String = tf.htmlText;
+		var fontSize:Number = 20;
+		var htmlSize = "SIZE=\"" + fontSize.toString() + "\""
+		tf.textAutoSize = "none";
+		tf.SetText(tfText, true);
+		tf.textAutoSize = "none";
+		//tf.invalidate();
+		var tfHeight:Number = tf.getLineMetrics(0).height * tf.numLines;		
+		while (tfHeight > tf._height && fontSize > 5)
+		{
+			var beforeHtmlSize = "SIZE=\"" + fontSize.toString() + "\"";
+			fontSize -= 1;
+			htmlSize = "SIZE=\"" + fontSize.toString() + "\"";
+			tfText = stringReplace(tfText, beforeHtmlSize, htmlSize);
+			tf.textAutoSize = "none";
+			tf.SetText(tfText, true);
+			tf.textAutoSize = "none";
+			tfHeight = tf.getLineMetrics(0).height * tf.numLines;			
+		}	
+	}
+
+	function AdjustItemCard(itemCardFrame:Number):Void
+	{			
+		//this._alpha = 0;
+		//itemCard["background"]._alpha = 100;		
+		var processedTextField:TextField = undefined;
+					
+		var itemCardX:Number;
+		var itemCardY:Number;
+		var itemCardBottom:Number;
+		
+		itemCardX = itemCard._parent._x + itemCard._x;
+		itemCardY = itemCard._parent._y + itemCard._y;	
+		this._y = itemCardY;
+		this._x = itemCardX - ((this._width - itemCardWidth) / 2);
+		itemCardBottom = this._height;
+		
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("<<<FRAME>>>: " + itemCardFrame, false);	
+		
+		switch (itemCardFrame)
+		{
+			case AHZ_ICF_WEAPONS_ENCH:
+			{
+				processedTextField = itemCard.WeaponEnchantedLabel; 		
+			}
+			break;
+			case AHZ_ICF_ARMOR_ENCH:
+			{
+				processedTextField = itemCard.ApparelEnchantedLabel;
+			}
+			break;
+			case AHZ_ICF_POTION:
+			{
+				processedTextField = itemCard.PotionsLabel;			
+			}
+			break;
+			case AHZ_ICF_BOOKS:
+			{
+				processedTextField = itemCard.BookDescriptionLabel;
+			}
+			break;			
+			case AHZ_ICF_MAGIC:
+			{
+				processedTextField = itemCard.MagicEffectsLabel;	
+			}
+			break;			
+			default:
+			{
+				processedTextField = undefined;
+				this._alpha = 0;
+				//itemCard["background"]._alpha = 60;
+			}
+			break;
+		}
+		
+		if (processedTextField)
+		{
+			_itemCardOverride = true;
+			this._alpha = 60;
+			itemCard["background"]._alpha = 0;	
+			processedTextField._width = this._width - (AHZ_XMargin * 2);
+			processedTextField._x = newX + AHZ_XMargin;
+			processedTextField._height = (itemCardBottom - processedTextField._y) - AHZ_YMargin;				
+			ShrinkToFit(processedTextField);	
+		}
+		else
+		{
+			_itemCardOverride = false;
+		}
+	}
 
     function appendImageToEnd(textField:TextField, imageName:String, width:Number, height:Number)
     {
@@ -191,9 +354,6 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         }
         else //Vanilla
         {
-			//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("bShowEquipButtonHelp" + _root.Menu_mc.bShowEquipButtonHelp, false);		
-			//_root.Menu_mc.bShowEquipButtonHelp
-			
             entryList = _root.Menu_mc.InventoryLists_mc._ItemsList.EntriesA;
             selectedIndex = _root.Menu_mc.InventoryLists_mc._ItemsList.iSelectedIndex;		
         }	
@@ -331,7 +491,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
 	// A hook to update the item card with extended items
     function UpdateItemCardInfo(aUpdateObj: Object): Void
-    {
+    {		
         _global.skse.plugins.AHZmoreHUDInventory.AHZLog("-->UpdateItemCardInfo", false);
         var entryList:Object;
         var selectedIndex:Number;
@@ -348,11 +508,30 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         }
         
         type = itemCard.itemInfo.type;
-
-        _global.skse.plugins.AHZmoreHUDInventory.AHZLog("Type: " + type.toString(), false);
-
         iconHolder.text = "";
-        
+
+		/*_global.skse.plugins.AHZmoreHUDInventory.AHZLog(">>>>>>>", false);
+		for (var name in itemCard) {
+			if (typeof (itemCard[name]) == "movieclip") {
+				//itemCard[name]._width = itemCard[name]._width / 2;
+				_global.skse.plugins.AHZmoreHUDInventory.AHZLog(name, false);
+				
+				
+				
+			}
+		}
+				
+		adjustWidths();
+		
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("<<<<<<<<", false);*/
+
+		//AdjustItemCard
+
+		if (isSkyui)
+		{
+			AdjustItemCard(_lastFrame);
+		}
+
         if (type != ICT_BOOK && type != ICT_ARMOR && type != ICT_WEAPON)
         {
             return;
