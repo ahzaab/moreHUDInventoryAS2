@@ -139,7 +139,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         tf.font = "$EverywhereMediumFont";
         iconHolder.setNewTextFormat(tf);
 
-        iconHolder.text = "No IconSource";      
+        iconHolder.text = "";      
                 
         _enableItemCardResize = isSkyui && _global.skse.plugins.AHZmoreHUDInventory.EnableItemCardResize();
                 
