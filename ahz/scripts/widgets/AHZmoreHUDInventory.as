@@ -75,15 +75,17 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
     /* INITIALIZATION */
         
+	// Get all unnamed movie clips.  Items that were not named in the fla file.
+	// The property name for "unnamed" elements is in the format "instance<nnn>"
 	function getUnnamedInstances(target:MovieClip, getOnlyMovieClips:Boolean) :Array
 	{
 		var arr:Array = new Array();
 		for(var i in target)
-		{
-			
+		{	
 			var proName = i.toString();
 			if (proName.indexOf("instance") == 0){
 				var unnamedIndex: String = proName.substring("instance".length);	
+				// If the value following the name "Instance" in the property name is a number
 				if (int(unnamedIndex))
 				{
 					if (getOnlyMovieClips){
@@ -103,15 +105,15 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
 	function GetBackgroundMovie():MovieClip
 	{
-		//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("GetBackgroundMovie", false);	
 		if (itemCard["background"])
 		{
-			//_global.skse.plugins.AHZmoreHUDInventory.AHZLog(MovieClip(itemCard["background"]).toString(), false);	
 			return MovieClip(itemCard["background"]);
 		}
 		else
 		{
-			// Vanilla does not name the background
+			// Vanilla does not name the background clip.  So we must
+			// enumerate for a movie clip without children.  It "Should" be the background
+			// Unnamed instances will have a name in the form of "instance<nnn>"
 			var arry:Array = getUnnamedInstances(itemCard, true);
 			if (arry && arry.length > 0)
 			{
@@ -127,16 +129,17 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 					}
 					else
 					{
-						//_global.skse.plugins.AHZmoreHUDInventory.AHZLog(arry[i].toString(), false);
 						return MovieClip(arry[i]);
 					}
 				}				
 			}
 		}
-		//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("undefined", false);
 		return undefined;
 	}		
 		
+	// This function is used to shift every item in the item card that is below the description
+	// text field.  Since we are increasing the height of the text field we need to make sure the 
+	// items below do not overlap
 	function GetItemsBelowDescription(targetMovie:MovieClip, targetTextField: TextField):Array
 	{
 		var arr:Array = new Array();
@@ -181,51 +184,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		{
 			rootMenuInstance = _root["Menu"];
 		}
-		
-		/*for (var i in rootMenuInstance)
-		 {
-			_global.skse.plugins.AHZmoreHUDInventory.AHZLog(i + " = " + rootMenuInstance[i], false) ;
-		 }*/
 			
-		/*for (var i in _root)
-		 {
-			_global.skse.plugins.AHZmoreHUDInventory.AHZLog(i + " = " + _root[i], false) ;
-		 }*/
-        /*_global.skse.plugins.AHZmoreHUDInventory.AHZLog("----------------", false) ;
-		for (var i in rootMenuInstance)
-		 {
-			 if (rootMenuInstance[i]._alpha > 0 && rootMenuInstance[i]._alpha < 100)
-			 {
-				_global.skse.plugins.AHZmoreHUDInventory.AHZLog(i + " = " + rootMenuInstance[i], false) ;
-				_global.skse.plugins.AHZmoreHUDInventory.AHZLog(i + "._alpha = " + rootMenuInstance[i]._alpha, false) ;
-			 }
-			//rootMenuInstance[i].border = true;
-			  for (var p in rootMenuInstance[i])
-			 {
-				 if (rootMenuInstance[i][p]._alpha > 0 && rootMenuInstance[i][p]._alpha < 100)
-				 {
-					_global.skse.plugins.AHZmoreHUDInventory.AHZLog("      " + p + " = " + rootMenuInstance[i][p], false) ;
-					_global.skse.plugins.AHZmoreHUDInventory.AHZLog("      " + p + "._alpha = " + rootMenuInstance[i][p]._alpha, false) ;
-				 }
-				  for (var q in rootMenuInstance[i][p])
-				 {
-					 if (rootMenuInstance[i][p][q]._alpha > 0 && rootMenuInstance[i][p][q]._alpha < 100)
-					 {
-						_global.skse.plugins.AHZmoreHUDInventory.AHZLog("             " + q + " = " + rootMenuInstance[i][p][q], false) ;
-						_global.skse.plugins.AHZmoreHUDInventory.AHZLog("             " + q + "._alpha = " + rootMenuInstance[i][p][q]._alpha, false) ;
-					 }
-					  for (var s in rootMenuInstance[i][p][q])
-					 {
-						 if (rootMenuInstance[i][p][q][s]._alpha > 0 && rootMenuInstance[i][p][q][s]._alpha < 100)
-						 {
-							_global.skse.plugins.AHZmoreHUDInventory.AHZLog("             " + s + " = " + rootMenuInstance[i][p][q][s], false) ;
-							_global.skse.plugins.AHZmoreHUDInventory.AHZLog("             " + s + "._alpha = " + rootMenuInstance[i][p][q][s]._alpha, false) ;
-						 }
-					 }		
-				 }				
-			 }
-		 }*/
-		
         // if the item card has this property name then this is SKYUI
         if (rootMenuInstance.itemCard)
         {
@@ -337,6 +296,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     {       	
         if (itemCard._alpha == 0 || rootMenuInstance._alpha < 100)
         {
+			// Always make sure that this movie clip is hidden if the parent and items card are hidden
             this._alpha = 0;
         }
         else
@@ -358,49 +318,12 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 					cardBackground._alpha = AHZ_NormalALPHA;    
 				} 	
 				
-        /*_global.skse.plugins.AHZmoreHUDInventory.AHZLog("++++++++++++++", false) ;
-		for (var i in rootMenuInstance)
-		 {
-			 if (rootMenuInstance[i]._alpha > 0 && rootMenuInstance[i]._alpha < 100)
-			 {
-				_global.skse.plugins.AHZmoreHUDInventory.AHZLog(i + " = " + rootMenuInstance[i], false) ;
-				_global.skse.plugins.AHZmoreHUDInventory.AHZLog(i + "._alpha = " + rootMenuInstance[i]._alpha, false) ;
-			 }
-			//rootMenuInstance[i].border = true;
-			  for (var p in rootMenuInstance[i])
-			 {
-				 if (rootMenuInstance[i][p]._alpha > 0 && rootMenuInstance[i][p]._alpha < 100)
-				 {
-					_global.skse.plugins.AHZmoreHUDInventory.AHZLog("      " + p + " = " + rootMenuInstance[i][p], false) ;
-					_global.skse.plugins.AHZmoreHUDInventory.AHZLog("      " + p + "._alpha = " + rootMenuInstance[i][p]._alpha, false) ;
-				 }
-				  for (var q in rootMenuInstance[i][p])
-				 {
-					 if (rootMenuInstance[i][p][q]._alpha > 0 && rootMenuInstance[i][p][q]._alpha < 100)
-					 {
-						_global.skse.plugins.AHZmoreHUDInventory.AHZLog("           " + q + " = " + rootMenuInstance[i][p][q], false) ;
-						_global.skse.plugins.AHZmoreHUDInventory.AHZLog("           " + q + "._alpha = " + rootMenuInstance[i][p][q]._alpha, false) ;
-					 }
-					  for (var s in rootMenuInstance[i][p][q])
-					 {
-						 if (rootMenuInstance[i][p][q][s]._alpha > 0 && rootMenuInstance[i][p][q][s]._alpha < 100)
-						 {
-							_global.skse.plugins.AHZmoreHUDInventory.AHZLog("                " + s + " = " + rootMenuInstance[i][p][q][s], false) ;
-							_global.skse.plugins.AHZmoreHUDInventory.AHZLog("                " + s + "._alpha = " + rootMenuInstance[i][p][q][s]._alpha, false) ;
-						 }
-					 }		
-				 }				
-			 }
-		 }	
-		 _global.skse.plugins.AHZmoreHUDInventory.AHZLog("----------------", false) ;*/
-				
-				// Vanilla does somthing weird where the item card gets stuck at around an apha of 23.  This was noticed for the crafting menu
+				// Vanilla does something weird where the item card gets stuck at around an apha of 23.  This was noticed for the crafting menu
 				// If resizing is running.  This will force the item card to go to its expected alpha
 				if (itemCard._alpha > 0 && itemCard._alpha < AHZ_NormalALPHA)
 				{
 					itemCard._alpha = AHZ_NormalALPHA;
-				}
-				
+				}	
 			}			          
         } 
     }
@@ -443,8 +366,6 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         var itemCardY:Number;
         var itemCardBottom:Number;
         
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("itemCard._parent._x: " + itemCard._parent._x, false);  
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("itemCard._x: " + itemCard._x, false); 
         itemCardX = itemCard._parent._x + itemCard._x;
         itemCardY = itemCard._parent._y + itemCard._y;  
         this._y = itemCardY;
@@ -502,7 +423,8 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		}
 		else
 		{
-			// If we advance to somethine like the confirmation frame, then make sure the icons are wiped
+			// If we advance to somethine like the confirmation frame, then make sure the icons are not visible
+			// Dont wipe the value because we need to restore it when returning to the same item card
 			if (itemCardFrame >= AHZ_ICF_EMPTY)
 			{
 				iconHolder._alpha = 0;
@@ -679,6 +601,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             
         _global.skse.plugins.AHZmoreHUDInventory.AHZLog("--.CheckBook", false);                 
             
+		// Just can't set the flag here because it breaks when reading spell tomes.	
         //entryList[selectedIndex].flags |= BOOKFLAG_READ;
         UpdateItemCardInfo(itemCard.itemInfo);  
     }
@@ -801,6 +724,9 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     }
 
     // A hook to update the item card with extended items
+	// Note this function does not get called by the crafting menus.  If we need to extend
+	// the crafting menu, I need to find another way.  I found no publically accessable hooks
+	// in the crafting menu.
     function UpdateItemCardInfo(aUpdateObj: Object): Void
     {       
         _global.skse.plugins.AHZmoreHUDInventory.AHZLog("-->UpdateItemCardInfo", false);
@@ -826,7 +752,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             AdjustItemCard(_lastFrame);
         }         
 
-		// No extended data to process for the magic menu
+		// No extended data to process for the magic menu at this time
 		if (_currentMenu == "MagicMenu")
 		{
 			return;
@@ -842,16 +768,13 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         {
             return;
         }
-
-		for (var i in entryList[selectedIndex])
-		{
-			_global.skse.plugins.AHZmoreHUDInventory.AHZLog(i + " = " + entryList[selectedIndex][i], false);
-		}
-
+		
 		if (entryList[selectedIndex].AHZItemCardObj.enchantmentKnown)
 		{
 			appendImageToEnd(iconHolder, "ahzknown.png", 20,20);
 		}
+		// Fortunately, extraData is not required for getting the Book Read Status.  This allows us to check
+		// it in real time and make sure the read status is accurate
 		else if (_global.skse.plugins.AHZmoreHUDInventory.GetWasBookRead(entryList[selectedIndex].formId))
 		{
 			if (_global.skse.plugins.AHZmoreHUDInventory.ShowBookRead())
