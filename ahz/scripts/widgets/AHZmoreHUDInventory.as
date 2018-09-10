@@ -15,15 +15,6 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 	public var cardBackground:MovieClip;
 	public var additionDescriptionHolder:MovieClip;
 	
-	// For Active Effects Frame
-	public var SecsText:TextField;
-	public var ActiveEffectTimeValue:TextField;
-	
-	// For Powers Frame
-	public var MagicCostTimeLabel:TextField;
-	public var MagicCostTimeValue:TextField;
-	public var MagicCostPerSec:TextField;
-
     // Public vars
 
     // Options
@@ -53,6 +44,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 	private static var AHZ_YMargin_Crafting:Number = 20;
     private static var AHZ_FontScale:Number 		= 0.90;
 	private static var AHZ_CraftingMenuYShift:Number = -25;
+	private static var AHZ_NormalALPHA:Number = 60;
 
     // Types from ItemCard
     private static var ICT_ARMOR: Number            = 1;
@@ -202,20 +194,33 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         /*_global.skse.plugins.AHZmoreHUDInventory.AHZLog("----------------", false) ;
 		for (var i in rootMenuInstance)
 		 {
-			_global.skse.plugins.AHZmoreHUDInventory.AHZLog(i + " = " + rootMenuInstance[i], false) ;
+			 if (rootMenuInstance[i]._alpha > 0 && rootMenuInstance[i]._alpha < 100)
+			 {
+				_global.skse.plugins.AHZmoreHUDInventory.AHZLog(i + " = " + rootMenuInstance[i], false) ;
+				_global.skse.plugins.AHZmoreHUDInventory.AHZLog(i + "._alpha = " + rootMenuInstance[i]._alpha, false) ;
+			 }
 			//rootMenuInstance[i].border = true;
 			  for (var p in rootMenuInstance[i])
 			 {
-				_global.skse.plugins.AHZmoreHUDInventory.AHZLog("     " + p + " = " + rootMenuInstance[i][p], false) ;
-				  //rootMenuInstance[i][p].border = true;
+				 if (rootMenuInstance[i][p]._alpha > 0 && rootMenuInstance[i][p]._alpha < 100)
+				 {
+					_global.skse.plugins.AHZmoreHUDInventory.AHZLog("      " + p + " = " + rootMenuInstance[i][p], false) ;
+					_global.skse.plugins.AHZmoreHUDInventory.AHZLog("      " + p + "._alpha = " + rootMenuInstance[i][p]._alpha, false) ;
+				 }
 				  for (var q in rootMenuInstance[i][p])
 				 {
-					//rootMenuInstance[i][p][q].border = true;
-					_global.skse.plugins.AHZmoreHUDInventory.AHZLog("             " + q + " = " + rootMenuInstance[i][p][q], false) ;
+					 if (rootMenuInstance[i][p][q]._alpha > 0 && rootMenuInstance[i][p][q]._alpha < 100)
+					 {
+						_global.skse.plugins.AHZmoreHUDInventory.AHZLog("             " + q + " = " + rootMenuInstance[i][p][q], false) ;
+						_global.skse.plugins.AHZmoreHUDInventory.AHZLog("             " + q + "._alpha = " + rootMenuInstance[i][p][q]._alpha, false) ;
+					 }
 					  for (var s in rootMenuInstance[i][p][q])
 					 {
-						//rootMenuInstance[i][p][q][s].border = true;
-						_global.skse.plugins.AHZmoreHUDInventory.AHZLog("                     " + s + " = " + rootMenuInstance[i][p][q][s], false) ;
+						 if (rootMenuInstance[i][p][q][s]._alpha > 0 && rootMenuInstance[i][p][q][s]._alpha < 100)
+						 {
+							_global.skse.plugins.AHZmoreHUDInventory.AHZLog("             " + s + " = " + rootMenuInstance[i][p][q][s], false) ;
+							_global.skse.plugins.AHZmoreHUDInventory.AHZLog("             " + s + "._alpha = " + rootMenuInstance[i][p][q][s]._alpha, false) ;
+						 }
 					 }		
 				 }				
 			 }
@@ -329,7 +334,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     }
 
     function ItemCardOnEnterFrame(): Void 
-    {       
+    {       	
         if (itemCard._alpha == 0 || rootMenuInstance._alpha < 100)
         {
             this._alpha = 0;
@@ -344,14 +349,58 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 				
 				if (_itemCardOverride)
 				{
-					this._alpha = 60;
+					this._alpha = AHZ_NormalALPHA;
 					cardBackground._alpha = 0;     
 				}
 				else
 				{
 					this._alpha = 0;
-					cardBackground._alpha = 60;    
+					cardBackground._alpha = AHZ_NormalALPHA;    
 				} 	
+				
+        /*_global.skse.plugins.AHZmoreHUDInventory.AHZLog("++++++++++++++", false) ;
+		for (var i in rootMenuInstance)
+		 {
+			 if (rootMenuInstance[i]._alpha > 0 && rootMenuInstance[i]._alpha < 100)
+			 {
+				_global.skse.plugins.AHZmoreHUDInventory.AHZLog(i + " = " + rootMenuInstance[i], false) ;
+				_global.skse.plugins.AHZmoreHUDInventory.AHZLog(i + "._alpha = " + rootMenuInstance[i]._alpha, false) ;
+			 }
+			//rootMenuInstance[i].border = true;
+			  for (var p in rootMenuInstance[i])
+			 {
+				 if (rootMenuInstance[i][p]._alpha > 0 && rootMenuInstance[i][p]._alpha < 100)
+				 {
+					_global.skse.plugins.AHZmoreHUDInventory.AHZLog("      " + p + " = " + rootMenuInstance[i][p], false) ;
+					_global.skse.plugins.AHZmoreHUDInventory.AHZLog("      " + p + "._alpha = " + rootMenuInstance[i][p]._alpha, false) ;
+				 }
+				  for (var q in rootMenuInstance[i][p])
+				 {
+					 if (rootMenuInstance[i][p][q]._alpha > 0 && rootMenuInstance[i][p][q]._alpha < 100)
+					 {
+						_global.skse.plugins.AHZmoreHUDInventory.AHZLog("           " + q + " = " + rootMenuInstance[i][p][q], false) ;
+						_global.skse.plugins.AHZmoreHUDInventory.AHZLog("           " + q + "._alpha = " + rootMenuInstance[i][p][q]._alpha, false) ;
+					 }
+					  for (var s in rootMenuInstance[i][p][q])
+					 {
+						 if (rootMenuInstance[i][p][q][s]._alpha > 0 && rootMenuInstance[i][p][q][s]._alpha < 100)
+						 {
+							_global.skse.plugins.AHZmoreHUDInventory.AHZLog("                " + s + " = " + rootMenuInstance[i][p][q][s], false) ;
+							_global.skse.plugins.AHZmoreHUDInventory.AHZLog("                " + s + "._alpha = " + rootMenuInstance[i][p][q][s]._alpha, false) ;
+						 }
+					 }		
+				 }				
+			 }
+		 }	
+		 _global.skse.plugins.AHZmoreHUDInventory.AHZLog("----------------", false) ;*/
+				
+				// Vanilla does somthing weird where the item card gets stuck at around an apha of 23.  This was noticed for the crafting menu
+				// If resizing is running.  This will force the item card to go to its expected alpha
+				if (itemCard._alpha > 0 && itemCard._alpha < AHZ_NormalALPHA)
+				{
+					itemCard._alpha = AHZ_NormalALPHA;
+				}
+				
 			}			          
         } 
     }
@@ -428,7 +477,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 				default:
 				{
 					processedTextField = undefined;
-					cardBackground._alpha = 60;
+					cardBackground._alpha = AHZ_NormalALPHA;
 					this._alpha = 0;
 				}
 				break;
@@ -437,7 +486,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			if (processedTextField)
 			{
 				_itemCardOverride = true;
-				this._alpha = 60;
+				this._alpha = AHZ_NormalALPHA;
 				cardBackground._alpha = 0;
 				processedTextField._width = this._width - (AHZ_XMargin * 2);
 				processedTextField._x = newX + AHZ_XMargin;
@@ -495,7 +544,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 				default:
 				{
 					processedTextField = undefined;
-					cardBackground._alpha = 60;
+					cardBackground._alpha = AHZ_NormalALPHA;
 					this._alpha = 0;
 				}
 				break;
@@ -504,7 +553,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			if (processedTextField)
 			{
 				_itemCardOverride = true;
-				this._alpha = 60;
+				this._alpha = AHZ_NormalALPHA;
 				cardBackground._alpha = 0;
 				processedTextField._width = this._width - (AHZ_XMargin * 2);
 				processedTextField._x = newX + AHZ_XMargin;
