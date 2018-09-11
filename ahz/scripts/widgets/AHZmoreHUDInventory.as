@@ -5,6 +5,8 @@ import skyui.util.Debug;
 import flash.geom.Transform;
 import flash.geom.ColorTransform;
 import flash.geom.Matrix;
+import ahz.scripts.widgets.AHZDefines.AHZCCSurvFrames;
+import ahz.scripts.widgets.AHZDefines.AHZVanillaFrames;
 
 class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 {
@@ -35,6 +37,8 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     private var _itemCardOverride:Boolean = false;
     private var _enableItemCardResize:Boolean = false;
 	private var _craftingMenuCardShifted:Boolean = false;
+	private var _isCCSurvCard:Boolean = false;
+	private var _frameDefines:Object;
 
     // Statics
     private static var hooksInstalled:Boolean = false;
@@ -54,24 +58,6 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     
     private static var BOOKFLAG_READ: Number        = 0x08; 
     private static var SHOW_PANEL                   = 1;
-
-	// For all non-magic menus
-    private static var AHZ_ICF_WEAPONS_ENCH:Number 	= 10;
-    private static var AHZ_ICF_ARMOR_ENCH:Number 	= 30;
-    private static var AHZ_ICF_POTION:Number 		= 40;
-    private static var AHZ_ICF_POTION_SURVIVAL:Number = 60;
-	private static var AHZ_ICF_POTION_SURVIVAL2:Number = 61;
-    private static var AHZ_ICF_INGR:Number 			= 50;
-    private static var AHZ_ICF_BOOKS:Number 		= 80;
-    private static var AHZ_ICF_MAGIC:Number 		= 90;
-	
-	// For magic menu
-	private static var AHZ_ICF_POWERS:Number 		= 95;
-	private static var AHZ_ICF_ACTIVEEFFECTS:Number = 171;
-	private static var AHZ_ICF_MM_MAGIC:Number = 100;
-	
-	// Anything above this frame does not get icons (For Now)
-	private static var AHZ_ICF_EMPTY:Number = 130;
 
     /* INITIALIZATION */
         
@@ -226,6 +212,21 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             return;
         }
 
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Frame Count: " + itemCard._totalframes, false);
+
+		if (itemCard._totalframes > 210)
+		{
+			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Survival Card Detected", true);
+			_isCCSurvCard = true;
+			_frameDefines = AHZCCSurvFrames;
+		}
+		else
+		{
+			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Vanilla Card Detected", true);
+			_isCCSurvCard = false;
+			_frameDefines = AHZVanillaFrames;
+		}
+
         if (! hooksInstalled)
         {
 			// The Crafting menus have no publically accessable update functions to hook
@@ -273,9 +274,8 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         tf.indent = 20;
         tf.font = "$EverywhereMediumFont";
         iconHolder.setNewTextFormat(tf);
-
         iconHolder.text = "";      
-                
+                				
         _enableItemCardResize = _global.skse.plugins.AHZmoreHUDInventory.EnableItemCardResize();
 
         if (_enableItemCardResize)
@@ -322,7 +322,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 				// If resizing is running.  This will force the item card to go to its expected alpha
 				if (itemCard._alpha > 0 && itemCard._alpha < AHZ_NormalALPHA)
 				{
-					itemCard._alpha = AHZ_NormalALPHA;
+					itemCard._alpha = 100;
 				}	
 			}			          
         } 
@@ -360,12 +360,12 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
     function AdjustItemCard(itemCardFrame:Number):Void
     {           
-        var processedTextField:TextField = undefined;
-                    
+        var processedTextField:TextField = undefined;      
         var itemCardX:Number;
         var itemCardY:Number;
         var itemCardBottom:Number;
-        
+        var marginRequired:Boolean = false;
+		
         itemCardX = itemCard._parent._x + itemCard._x;
         itemCardY = itemCard._parent._y + itemCard._y;  
         this._y = itemCardY;
@@ -374,141 +374,119 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         var oldDescrptionHeight:Number;
 		
         _global.skse.plugins.AHZmoreHUDInventory.AHZLog("<<<FRAME>>>: " + itemCardFrame, false);    
-        	
-		if (_currentMenu == "MagicMenu")
+        
+		// If we advance to somethine like the confirmation frame, then make sure the icons are not visible
+		// Dont wipe the value because we need to restore it when returning to the same item card
+		if (itemCardFrame >= _frameDefines.EMPTY_LOW && itemCardFrame <= _frameDefines.EMPTY_HIGH)
 		{
-			switch (itemCardFrame)
-			{       
-				case AHZ_ICF_MAGIC:
-				case AHZ_ICF_MM_MAGIC:
-				{
-					processedTextField = itemCard.MagicEffectsLabel;    
-				}
-				break;  
-				case AHZ_ICF_POWERS:
-				{
-					processedTextField = itemCard.MagicEffectsLabel;
-				}
-				break;
-				case AHZ_ICF_ACTIVEEFFECTS:
-				{
-					processedTextField = itemCard.MagicEffectsLabel;
-				}
-				break;			
-				default:
-				{
-					processedTextField = undefined;
-					cardBackground._alpha = AHZ_NormalALPHA;
-					this._alpha = 0;
-				}
-				break;
-			}
-			
-			if (processedTextField)
-			{
-				_itemCardOverride = true;
-				this._alpha = AHZ_NormalALPHA;
-				cardBackground._alpha = 0;
-				processedTextField._width = this._width - (AHZ_XMargin * 2);
-				processedTextField._x = newX + AHZ_XMargin;
-				oldDescrptionHeight = processedTextField._height;
-				processedTextField._height = (itemCardBottom - processedTextField._y) - (AHZ_YMargin_WithItems); 
-				ShrinkToFit(processedTextField); 
-				additionDescriptionHolder
-			}
-			else
-			{
-				_itemCardOverride = false;
-			}		
+			iconHolder._alpha = 0;
 		}
 		else
 		{
-			// If we advance to somethine like the confirmation frame, then make sure the icons are not visible
-			// Dont wipe the value because we need to restore it when returning to the same item card
-			if (itemCardFrame >= AHZ_ICF_EMPTY)
+			iconHolder._alpha = 100;
+		}		
+		
+		switch (itemCardFrame)
+		{       
+			case _frameDefines.WEAPONS_ENCH:
 			{
-				iconHolder._alpha = 0;
+				processedTextField = itemCard.WeaponEnchantedLabel;         
 			}
-			else
+			break;
+			case _frameDefines.ARMOR_ENCH:
+			case _frameDefines.ARMOR_SURV_ENCH:
 			{
-				iconHolder._alpha = 100;
+				processedTextField = itemCard.ApparelEnchantedLabel;
+			}					
+			break;
+			case _frameDefines.POTION_REF:
+			{
+				processedTextField = itemCard.PotionsLabel;
+			}					
+			break;
+			case _frameDefines.BOOKS_DESCRIPTION:
+			{
+				processedTextField = itemCard.BookDescriptionLabel;
+			}					
+			break;
+		
+			case _frameDefines.MAGIC_REG:
+			case _frameDefines.POW_REG:
+			case _frameDefines.MAGIC_TIME_LABEL:
+			case _frameDefines.POWER_TIME_LABEL:
+			case _frameDefines.ACTIVEEFFECTS:
+			{
+				processedTextField = itemCard.MagicEffectsLabel;
+				marginRequired = true;
 			}
+			break;  
+			case _frameDefines.MAG_SHORT:
+			{
+				processedTextField = itemCard.MagicEffectsLabel;
+			}
+			break; 				
 			
-			switch (itemCardFrame)
+			/*case _frameDefines.CFT_ENCHANTING:
 			{
-				case AHZ_ICF_WEAPONS_ENCH:
-				{
-					processedTextField = itemCard.WeaponEnchantedLabel;         
-				}
-				break;
-				case AHZ_ICF_ARMOR_ENCH:
-				{
-					processedTextField = itemCard.ApparelEnchantedLabel;
-				}
-				break;
-				case AHZ_ICF_POTION:
-				case AHZ_ICF_POTION_SURVIVAL:
-				case AHZ_ICF_POTION_SURVIVAL2:
-				{
-					processedTextField = itemCard.PotionsLabel;         
-				}
-				break;
-				case AHZ_ICF_BOOKS:
-				{
-					processedTextField = itemCard.BookDescriptionLabel;
-				}
-				break;          
-				case AHZ_ICF_MAGIC:
-				{
-					processedTextField = itemCard.MagicEffectsLabel;    
-				}
-				break;  		
-				default:
-				{
-					processedTextField = undefined;
-					cardBackground._alpha = AHZ_NormalALPHA;
-					this._alpha = 0;
-				}
-				break;
+				processedTextField = itemCard.EnchantmentLabel;
 			}
-			
-			if (processedTextField)
+			break; 	*/		
+		
+			// All other frames are not going to be resized
+			default:
 			{
-				_itemCardOverride = true;
-				this._alpha = AHZ_NormalALPHA;
-				cardBackground._alpha = 0;
-				processedTextField._width = this._width - (AHZ_XMargin * 2);
-				processedTextField._x = newX + AHZ_XMargin;
-				oldDescrptionHeight = processedTextField._height;
-				processedTextField._height = (itemCardBottom - processedTextField._y) - AHZ_YMargin;		
-				ShrinkToFit(processedTextField);    
-				
-				// Need to shift up to make room for the requied crafting materials
-				if (_currentMenu == "Crafting Menu" && !_craftingMenuCardShifted){
-					itemCard._y = itemCard._y + AHZ_CraftingMenuYShift;
-					this._y = this._y + AHZ_CraftingMenuYShift;
-					_craftingMenuCardShifted = true;
-				}
+				processedTextField = undefined;
+				cardBackground._alpha = AHZ_NormalALPHA;
+				this._alpha = 0;
 			}
-			else
-			{
-				_itemCardOverride = false;
-				
-				// Shift back to normal
-				if (_currentMenu == "Crafting Menu" && _craftingMenuCardShifted){
-					itemCard._y = itemCard._y - AHZ_CraftingMenuYShift;
-					this._y = this._y - AHZ_CraftingMenuYShift;
-					_craftingMenuCardShifted = false;
-				}				
-			}
+			break;
 		}
 		
+		if (processedTextField)
+		{
+			_itemCardOverride = true;
+			this._alpha = AHZ_NormalALPHA;
+			cardBackground._alpha = 0;
+			processedTextField._width = this._width - (AHZ_XMargin * 2);
+			processedTextField._x = newX + AHZ_XMargin;
+			oldDescrptionHeight = processedTextField._height;
+			
+			if (marginRequired)
+			{
+				processedTextField._height = (itemCardBottom - processedTextField._y) - AHZ_YMargin_WithItems;			
+			}
+			else
+			{
+				processedTextField._height = (itemCardBottom - processedTextField._y) - AHZ_YMargin;			
+			}
+			
+			ShrinkToFit(processedTextField);    
+			
+			// Need to shift up to make room for the requied crafting materials
+			if (_currentMenu == "Crafting Menu" && !_craftingMenuCardShifted){
+				itemCard._y = itemCard._y + AHZ_CraftingMenuYShift;
+				this._y = this._y + AHZ_CraftingMenuYShift;
+				_craftingMenuCardShifted = true;
+			}
+		}
+		else
+		{
+			_itemCardOverride = false;
+			
+			// Shift back to normal
+			if (_currentMenu == "Crafting Menu" && _craftingMenuCardShifted){
+				itemCard._y = itemCard._y - AHZ_CraftingMenuYShift;
+				this._y = this._y - AHZ_CraftingMenuYShift;
+				_craftingMenuCardShifted = false;
+			}				
+		}
+		
+		// Shift any control the is below the processedTextField, down to the new
+		// Width
 		if (_itemCardOverride)
 		{
-			var itemsBelow:Array = GetItemsBelowDescription(itemCard, processedTextField);
-			
-			var itemBelow:Number;
-			
+			var itemsBelow:Array = GetItemsBelowDescription(itemCard, processedTextField);	
+			var itemBelow:Number;	
 			for (itemBelow = 0; itemBelow < itemsBelow.length; itemBelow++)
 			{
 				itemsBelow[itemBelow]._y = itemsBelow[itemBelow]._y + (processedTextField._height - oldDescrptionHeight);
@@ -733,6 +711,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         var entryList:Object;
         var selectedIndex:Number;
         var type:Number;
+		var itemCardFrame:Number = itemCard._currentframe;
         if (isSkyui)
         {
             entryList = rootMenuInstance.inventoryLists.itemList._entryList;
@@ -758,8 +737,9 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			return;
 		}
 
+		
 		// Keep icons off of frames like the confirmation frame etc.
-		if (itemCard._currentframe >= AHZ_ICF_EMPTY)
+		if (itemCardFrame >= _frameDefines.EMPTY_LOW && itemCardFrame <= _frameDefines.EMPTY_HIGH)
 		{
 			return;
 		}
