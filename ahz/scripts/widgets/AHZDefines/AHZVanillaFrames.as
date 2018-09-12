@@ -31,4 +31,6 @@
 	// This range includes confirmation cards, we will ignore these
 	public static var EMPTY_LOW:Number 					= 130;	
 	public static var EMPTY_HIGH:Number 				= 170;		
+	
+	public static var MAX_FRAMES:Number 				= 201;	
 }

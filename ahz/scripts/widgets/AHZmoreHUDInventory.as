@@ -7,6 +7,7 @@ import flash.geom.ColorTransform;
 import flash.geom.Matrix;
 import ahz.scripts.widgets.AHZDefines.AHZCCSurvFrames;
 import ahz.scripts.widgets.AHZDefines.AHZVanillaFrames;
+import ahz.scripts.widgets.AHZDefines.AHZCCSkyUIFrames;
 
 class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 {
@@ -214,12 +215,18 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
 		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Frame Count: " + itemCard._totalframes, false);
 
-		if (itemCard._totalframes > 210)
+		if (itemCard._totalframes >= AHZCCSurvFrames.MAX_FRAMES)
 		{
 			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Survival Card Detected", true);
 			_isCCSurvCard = true;
 			_frameDefines = AHZCCSurvFrames;
 		}
+		else if (itemCard._totalframes >= AHZCCSkyUIFrames.MAX_FRAMES)
+		{
+			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("SkyUI Survival Integration Card Detected", true);
+			_isCCSurvCard = true;
+			_frameDefines = AHZCCSkyUIFrames;
+		}		
 		else
 		{
 			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Vanilla Card Detected", true);
@@ -306,25 +313,24 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 				cardBackground = GetBackgroundMovie();
 				_lastFrame = itemCard._currentframe;    
 				AdjustItemCard(_lastFrame);
-				
-				if (_itemCardOverride)
-				{
-					this._alpha = AHZ_NormalALPHA;
-					cardBackground._alpha = 0;     
-				}
-				else
-				{
-					this._alpha = 0;
-					cardBackground._alpha = AHZ_NormalALPHA;    
-				} 	
-				
-				// Vanilla does something weird where the item card gets stuck at around an apha of 23.  This was noticed for the crafting menu
-				// If resizing is running.  This will force the item card to go to its expected alpha
-				if (itemCard._alpha > 0 && itemCard._alpha < AHZ_NormalALPHA)
-				{
-					itemCard._alpha = 100;
-				}	
-			}			          
+			}
+			if (_itemCardOverride)
+			{
+				this._alpha = AHZ_NormalALPHA;
+				cardBackground._alpha = 0;     
+			}
+			else
+			{
+				this._alpha = 0;
+				cardBackground._alpha = AHZ_NormalALPHA;    
+			} 	
+			
+			// Vanilla does something weird where the item card gets stuck at around an apha of 23.  This was noticed for the crafting menu
+			// If resizing is running.  This will force the item card to go to its expected alpha
+			if (itemCard._alpha > 0 && itemCard._alpha < AHZ_NormalALPHA)
+			{
+				itemCard._alpha = 100;
+			}	          
         } 
     }
 
