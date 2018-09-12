@@ -6,4 +6,5 @@ intrinsic class skse.plugins.AHZmoreHUDInventory
     static function AHZLog(data:String, isReleaseMode:Boolean):Void;
     static function GetCurrentMenu():String;
 	static function EnableItemCardResize():Boolean;
+	static function GetWasBookRead():Boolean;
 }

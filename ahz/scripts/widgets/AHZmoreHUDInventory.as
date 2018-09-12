@@ -5,13 +5,19 @@ import skyui.util.Debug;
 import flash.geom.Transform;
 import flash.geom.ColorTransform;
 import flash.geom.Matrix;
+import ahz.scripts.widgets.AHZDefines.AHZCCSurvFrames;
+import ahz.scripts.widgets.AHZDefines.AHZVanillaFrames;
+import ahz.scripts.widgets.AHZDefines.AHZCCSkyUIFrames;
 
 class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 {
     //Widgets
-    public var iconHolder: TextField
+    public var iconHolder: TextField;
     public var itemCard: MovieClip;
-
+	public var rootMenuInstance:MovieClip;
+	public var cardBackground:MovieClip;
+	public var additionDescriptionHolder:MovieClip;
+	
     // Public vars
 
     // Options
@@ -31,12 +37,19 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     private var _lastFrame:Number = -1;
     private var _itemCardOverride:Boolean = false;
     private var _enableItemCardResize:Boolean = false;
+	private var _craftingMenuCardShifted:Boolean = false;
+	private var _isCCSurvCard:Boolean = false;
+	private var _frameDefines:Object;
 
     // Statics
     private static var hooksInstalled:Boolean = false;
     private static var AHZ_XMargin:Number 			= 15;
     private static var AHZ_YMargin:Number 			= 0;
+	private static var AHZ_YMargin_WithItems:Number = 35;
+	private static var AHZ_YMargin_Crafting:Number = 20;
     private static var AHZ_FontScale:Number 		= 0.90;
+	private static var AHZ_CraftingMenuYShift:Number = -25;
+	private static var AHZ_NormalALPHA:Number = 60;
 
     // Types from ItemCard
     private static var ICT_ARMOR: Number            = 1;
@@ -47,17 +60,96 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     private static var BOOKFLAG_READ: Number        = 0x08; 
     private static var SHOW_PANEL                   = 1;
 
-    private static var AHZ_ICF_WEAPONS_ENCH:Number 	= 10;
-    private static var AHZ_ICF_ARMOR_ENCH:Number 	= 30;
-    private static var AHZ_ICF_POTION:Number 		= 40;
-    private static var AHZ_ICF_POTION_SURVIVAL:Number = 60;
-    private static var AHZ_ICF_INGR:Number 			= 50;
-    private static var AHZ_ICF_BOOKS:Number 		= 80;
-    private static var AHZ_ICF_MAGIC:Number 		= 90;
-
-
     /* INITIALIZATION */
         
+	// Get all unnamed movie clips.  Items that were not named in the fla file.
+	// The property name for "unnamed" elements is in the format "instance<nnn>"
+	function getUnnamedInstances(target:MovieClip, getOnlyMovieClips:Boolean) :Array
+	{
+		var arr:Array = new Array();
+		for(var i in target)
+		{	
+			var proName = i.toString();
+			if (proName.indexOf("instance") == 0){
+				var unnamedIndex: String = proName.substring("instance".length);	
+				// If the value following the name "Instance" in the property name is a number
+				if (int(unnamedIndex))
+				{
+					if (getOnlyMovieClips){
+						if (target[i] instanceof MovieClip)
+						{
+							arr.push(target[i]);
+						}
+					}
+					else{
+						arr.push(target[i]);	
+					}
+				}
+			}
+		}	
+		return arr;
+	}
+
+	function GetBackgroundMovie():MovieClip
+	{
+		if (itemCard["background"])
+		{
+			return MovieClip(itemCard["background"]);
+		}
+		else
+		{
+			// Vanilla does not name the background clip.  So we must
+			// enumerate for a movie clip without children.  It "Should" be the background
+			// Unnamed instances will have a name in the form of "instance<nnn>"
+			var arry:Array = getUnnamedInstances(itemCard, true);
+			if (arry && arry.length > 0)
+			{
+				var i:Number;
+				for (i = 0; i < arry.length; i++)
+				{
+					var children:Array = getUnnamedInstances(arry[i], false);
+					
+					// Skip movie clips that have unnamed children.  The background will not have any
+					if (children && children.length > 0)
+					{
+						// Skip
+					}
+					else
+					{
+						return MovieClip(arry[i]);
+					}
+				}				
+			}
+		}
+		return undefined;
+	}		
+		
+	// This function is used to shift every item in the item card that is below the description
+	// text field.  Since we are increasing the height of the text field we need to make sure the 
+	// items below do not overlap
+	function GetItemsBelowDescription(targetMovie:MovieClip, targetTextField: TextField):Array
+	{
+		var arr:Array = new Array();
+		for(var i in targetMovie)
+		{
+			if (targetMovie[i] instanceof TextField)
+			{
+				if (TextField(targetMovie[i])._y > targetTextField._y)
+				{
+					arr.push(TextField(targetMovie[i]));
+				}
+			}
+			else if (targetMovie[i] instanceof MovieClip)
+			{
+				if (MovieClip(targetMovie[i])._y > targetTextField._y)
+				{
+					arr.push(MovieClip(targetMovie[i]));
+				}
+			}
+		}	
+		return arr;
+	}				
+		
     public function AHZmoreHUDInventory()
     {
         super();    
@@ -72,21 +164,48 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             _global.skse.ExtendData(true);
             return;
         }
-        
+		
+		rootMenuInstance = _root.Menu_mc;
+		
+		if (_currentMenu == "Crafting Menu")
+		{
+			rootMenuInstance = _root["Menu"];
+		}
+			
         // if the item card has this property name then this is SKYUI
-        if (_root.Menu_mc.itemCard)
+        if (rootMenuInstance.itemCard)
         {
-            iconHolder = _root.Menu_mc.itemCard.createTextField("iconHolder", _root.Menu_mc.itemCard.getNextHighestDepth(), 0, 20, _root.Menu_mc.itemCard._width, 22);
-            itemCard = _root.Menu_mc.itemCard;
+			itemCard = rootMenuInstance.itemCard;
+            iconHolder = itemCard.createTextField("iconHolder", itemCard.getNextHighestDepth(), 0, 20, itemCard._width, 22);
             isSkyui = true;
         }
         // if the item card has this property name then this is Vanilla
-        else if (_root.Menu_mc.ItemCard_mc)
+        else if (rootMenuInstance.ItemCard_mc)
         {
-            iconHolder = _root.Menu_mc.ItemCard_mc.createTextField("iconHolder", _root.Menu_mc.ItemCard_mc.getNextHighestDepth(), 0, 20, _root.Menu_mc.ItemCard_mc._width, 22);
-            itemCard = _root.Menu_mc.ItemCard_mc;
+			itemCard = rootMenuInstance.ItemCard_mc;
+            iconHolder = itemCard.createTextField("iconHolder", itemCard.getNextHighestDepth(), 0, 20, itemCard._width, 22);
             isSkyui = false;
         }
+		else if (_currentMenu == "Crafting Menu" && rootMenuInstance.ItemInfoHolder.ItemInfo)
+		{
+			itemCard = rootMenuInstance.ItemInfoHolder.ItemInfo;
+			iconHolder = itemCard.createTextField("iconHolder", itemCard.getNextHighestDepth(), 0, 20, itemCard._width, 22);
+			additionDescriptionHolder = rootMenuInstance.ItemInfoHolder.AdditionalDescriptionHolder;
+			if (rootMenuInstance.BottomBarInfo.PlayerInfoCard_mc)
+			{
+            	isSkyui = false;
+			}
+			else if (rootMenuInstance.BottomBarInfo.playerInfoCard)
+			{
+				isSkyui = true;
+			}
+			else  // Cannot tell if its skyui or vanilla
+			{
+				_global.skse.plugins.AHZmoreHUDInventory.AHZLog(
+                    "Could not obtain a reference to the item card.", true)
+            	return;
+			}
+		}
         else
         {
             _global.skse.plugins.AHZmoreHUDInventory.AHZLog(
@@ -94,34 +213,58 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             return;
         }
 
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Frame Count: " + itemCard._totalframes, false);
+
+		if (itemCard._totalframes >= AHZCCSurvFrames.MAX_FRAMES)
+		{
+			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Survival Card Detected", true);
+			_isCCSurvCard = true;
+			_frameDefines = AHZCCSurvFrames;
+		}
+		else if (itemCard._totalframes >= AHZCCSkyUIFrames.MAX_FRAMES)
+		{
+			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("SkyUI Survival Integration Card Detected", true);
+			_isCCSurvCard = true;
+			_frameDefines = AHZCCSkyUIFrames;
+		}		
+		else
+		{
+			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Vanilla Card Detected", true);
+			_isCCSurvCard = false;
+			_frameDefines = AHZVanillaFrames;
+		}
+
         if (! hooksInstalled)
         {
-            // Apply hooks to hook events
-            hookFunction(_root.Menu_mc, "UpdateItemCardInfo", this, "UpdateItemCardInfo");
-            // For SkuUI the startItemEquip is called when the shift button is held down
-            // This is the only time a book can be read in the container menu for SkyUI
-            if (_currentMenu == "ContainerMenu" && isSkyui)
-            {
-                hookFunction(_root.Menu_mc, "startItemEquip", this, "startItemEquip");  
-            }
-            
-            // For Inventory Menu needed to invalidate "Rook Read"
-            if (_currentMenu == "InventoryMenu" && isSkyui)
-            {
-                hookFunction(_root.Menu_mc, "onItemSelect", this, "onItemSelect");
-                hookFunction(_root.Menu_mc, "AttemptEquip", this, "AttemptEquip");
-                hookFunction(_root.Menu_mc, "SetPlatform", this, "SetPlatform");
-            }                   
-                    
-            // For Used for Vanilla to check the book read status       
-            if (_currentMenu == "InventoryMenu" || _currentMenu == "ContainerMenu" && !isSkyui)
-            {
-                hookFunction(_root.Menu_mc, "onItemSelect", this, "onItemSelect");
-                hookFunction(_root.Menu_mc, "AttemptEquip", this, "AttemptEquip");
-                hookFunction(_root.Menu_mc, "SetPlatform", this, "SetPlatform");
-                hookFunction(_root.Menu_mc, "onShowItemsList", this, "onShowItemsList");
-            }                       
-                    
+			// The Crafting menus have no publically accessable update functions to hook
+			if (_currentMenu != "Crafting Menu")
+			{
+				hookFunction(rootMenuInstance, "UpdateItemCardInfo", this, "UpdateItemCardInfo");
+	
+				// For SkuUI the startItemEquip is called when the shift button is held down
+				// This is the only time a book can be read in the container menu for SkyUI
+				if (_currentMenu == "ContainerMenu" && isSkyui)
+				{
+					hookFunction(rootMenuInstance, "startItemEquip", this, "startItemEquip");  
+				}
+				
+				// For Inventory Menu needed to invalidate "Book Read"
+				if (_currentMenu == "InventoryMenu" && isSkyui)
+				{
+					hookFunction(rootMenuInstance, "onItemSelect", this, "onItemSelect");
+					hookFunction(rootMenuInstance, "AttemptEquip", this, "AttemptEquip");
+					hookFunction(rootMenuInstance, "SetPlatform", this, "SetPlatform");
+				}                   
+						
+				// For Used for Vanilla to check the book read status       
+				if (_currentMenu == "InventoryMenu" || _currentMenu == "ContainerMenu" && !isSkyui)
+				{
+					hookFunction(rootMenuInstance, "onItemSelect", this, "onItemSelect");
+					hookFunction(rootMenuInstance, "AttemptEquip", this, "AttemptEquip");
+					hookFunction(rootMenuInstance, "SetPlatform", this, "SetPlatform");
+					hookFunction(rootMenuInstance, "onShowItemsList", this, "onShowItemsList");
+				}                       
+			}
             _global.skse.plugins.AHZmoreHUDInventory.InstallHooks();    
             hooksInstalled = true;
             
@@ -138,16 +281,16 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         tf.indent = 20;
         tf.font = "$EverywhereMediumFont";
         iconHolder.setNewTextFormat(tf);
-
         iconHolder.text = "";      
-                
-        _enableItemCardResize = isSkyui && _global.skse.plugins.AHZmoreHUDInventory.EnableItemCardResize();
-                
+                				
+        _enableItemCardResize = _global.skse.plugins.AHZmoreHUDInventory.EnableItemCardResize();
+
         if (_enableItemCardResize)
         {
+			cardBackground = GetBackgroundMovie();
             newWidth = this._width;
-            originalX = itemCard["background"]._x;  
-            originalWidth = itemCard["background"]._width;
+            originalX = cardBackground._x;  
+            originalWidth = cardBackground._width;
             newX = (originalX - (newWidth - originalWidth)) / 2;                
             itemCardWidth = itemCard._width;
                 
@@ -157,30 +300,38 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     }
 
     function ItemCardOnEnterFrame(): Void 
-    {       
-        if (itemCard._currentframe != _lastFrame)
+    {       	
+        if (itemCard._alpha == 0 || rootMenuInstance._alpha < 100)
         {
-            _lastFrame = itemCard._currentframe;    
-            AdjustItemCard(_lastFrame);
-        }       
-    
-        if (itemCard._alpha == 0 || _root.Menu_mc._alpha < 100)
-        {
+			// Always make sure that this movie clip is hidden if the parent and items card are hidden
             this._alpha = 0;
         }
         else
         {
-            if (_itemCardOverride)
-            {
-                this._alpha = 60;
-                itemCard["background"]._alpha = 0;                  
-            }
-            else
-            {
-                this._alpha = 0;
-				itemCard["background"]._alpha = 60;    
-            }           
-        }   
+			if (itemCard._currentframe != _lastFrame)
+			{
+				cardBackground = GetBackgroundMovie();
+				_lastFrame = itemCard._currentframe;    
+				AdjustItemCard(_lastFrame);
+			}
+			if (_itemCardOverride)
+			{
+				this._alpha = AHZ_NormalALPHA;
+				cardBackground._alpha = 0;     
+			}
+			else
+			{
+				this._alpha = 0;
+				cardBackground._alpha = AHZ_NormalALPHA;    
+			} 	
+			
+			// Vanilla does something weird where the item card gets stuck at around an apha of 23.  This was noticed for the crafting menu
+			// If resizing is running.  This will force the item card to go to its expected alpha
+			if (itemCard._alpha > 0 && itemCard._alpha < AHZ_NormalALPHA)
+			{
+				itemCard._alpha = 100;
+			}	          
+        } 
     }
 
     function stringReplace(block:String, findStr:String, replaceStr:String):String
@@ -215,71 +366,138 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
     function AdjustItemCard(itemCardFrame:Number):Void
     {           
-        var processedTextField:TextField = undefined;
-                    
+        var processedTextField:TextField = undefined;      
         var itemCardX:Number;
         var itemCardY:Number;
         var itemCardBottom:Number;
-        
+        var marginRequired:Boolean = false;
+		
         itemCardX = itemCard._parent._x + itemCard._x;
         itemCardY = itemCard._parent._y + itemCard._y;  
         this._y = itemCardY;
         this._x = itemCardX - ((this._width - itemCardWidth) / 2);
         itemCardBottom = this._height;
-        
+        var oldDescrptionHeight:Number;
+		
         _global.skse.plugins.AHZmoreHUDInventory.AHZLog("<<<FRAME>>>: " + itemCardFrame, false);    
         
-        switch (itemCardFrame)
-        {
-            case AHZ_ICF_WEAPONS_ENCH:
-            {
-                processedTextField = itemCard.WeaponEnchantedLabel;         
-            }
-            break;
-            case AHZ_ICF_ARMOR_ENCH:
-            {
-                processedTextField = itemCard.ApparelEnchantedLabel;
-            }
-            break;
-            case AHZ_ICF_POTION:
-            case AHZ_ICF_POTION_SURVIVAL:
-            {
-                processedTextField = itemCard.PotionsLabel;         
-            }
-            break;
-            case AHZ_ICF_BOOKS:
-            {
-                processedTextField = itemCard.BookDescriptionLabel;
-            }
-            break;          
-            case AHZ_ICF_MAGIC:
-            {
-                processedTextField = itemCard.MagicEffectsLabel;    
-            }
-            break;          
-            default:
-            {
-                processedTextField = undefined;
-				itemCard["background"]._alpha = 60;  
-                this._alpha = 0;
-            }
-            break;
-        }
-        
-        if (processedTextField)
-        {
-            _itemCardOverride = true;
-            this._alpha = 60;
-            itemCard["background"]._alpha = 0;  
-            processedTextField._width = this._width - (AHZ_XMargin * 2);
-            processedTextField._x = newX + AHZ_XMargin;
-            processedTextField._height = (itemCardBottom - processedTextField._y) - AHZ_YMargin;                
-            ShrinkToFit(processedTextField);    
-        }
-        else
-        {
-            _itemCardOverride = false;
-        }
+		// If we advance to somethine like the confirmation frame, then make sure the icons are not visible
+		// Dont wipe the value because we need to restore it when returning to the same item card
+		if (itemCardFrame >= _frameDefines.EMPTY_LOW && itemCardFrame <= _frameDefines.EMPTY_HIGH)
+		{
+			iconHolder._alpha = 0;
+		}
+		else
+		{
+			iconHolder._alpha = 100;
+		}		
+		
+		switch (itemCardFrame)
+		{       
+			case _frameDefines.WEAPONS_ENCH:
+			{
+				processedTextField = itemCard.WeaponEnchantedLabel;         
+			}
+			break;
+			case _frameDefines.ARMOR_ENCH:
+			case _frameDefines.ARMOR_SURV_ENCH:
+			{
+				processedTextField = itemCard.ApparelEnchantedLabel;
+			}					
+			break;
+			case _frameDefines.POTION_REF:
+			{
+				processedTextField = itemCard.PotionsLabel;
+			}					
+			break;
+			case _frameDefines.BOOKS_DESCRIPTION:
+			{
+				processedTextField = itemCard.BookDescriptionLabel;
+			}					
+			break;
+		
+			case _frameDefines.MAGIC_REG:
+			case _frameDefines.POW_REG:
+			case _frameDefines.MAGIC_TIME_LABEL:
+			case _frameDefines.POWER_TIME_LABEL:
+			case _frameDefines.ACTIVEEFFECTS:
+			{
+				processedTextField = itemCard.MagicEffectsLabel;
+				marginRequired = true;
+			}
+			break;  
+			case _frameDefines.MAG_SHORT:
+			{
+				processedTextField = itemCard.MagicEffectsLabel;
+			}
+			break; 				
+			
+			/*case _frameDefines.CFT_ENCHANTING:
+			{
+				processedTextField = itemCard.EnchantmentLabel;
+			}
+			break; 	*/		
+		
+			// All other frames are not going to be resized
+			default:
+			{
+				processedTextField = undefined;
+				cardBackground._alpha = AHZ_NormalALPHA;
+				this._alpha = 0;
+			}
+			break;
+		}
+		
+		if (processedTextField)
+		{
+			_itemCardOverride = true;
+			this._alpha = AHZ_NormalALPHA;
+			cardBackground._alpha = 0;
+			processedTextField._width = this._width - (AHZ_XMargin * 2);
+			processedTextField._x = newX + AHZ_XMargin;
+			oldDescrptionHeight = processedTextField._height;
+			
+			if (marginRequired)
+			{
+				processedTextField._height = (itemCardBottom - processedTextField._y) - AHZ_YMargin_WithItems;			
+			}
+			else
+			{
+				processedTextField._height = (itemCardBottom - processedTextField._y) - AHZ_YMargin;			
+			}
+			
+			ShrinkToFit(processedTextField);    
+			
+			// Need to shift up to make room for the requied crafting materials
+			if (_currentMenu == "Crafting Menu" && !_craftingMenuCardShifted){
+				itemCard._y = itemCard._y + AHZ_CraftingMenuYShift;
+				this._y = this._y + AHZ_CraftingMenuYShift;
+				_craftingMenuCardShifted = true;
+			}
+		}
+		else
+		{
+			_itemCardOverride = false;
+			
+			// Shift back to normal
+			if (_currentMenu == "Crafting Menu" && _craftingMenuCardShifted){
+				itemCard._y = itemCard._y - AHZ_CraftingMenuYShift;
+				this._y = this._y - AHZ_CraftingMenuYShift;
+				_craftingMenuCardShifted = false;
+			}				
+		}
+		
+		// Shift any control the is below the processedTextField, down to the new
+		// Width
+		if (_itemCardOverride)
+		{
+			var itemsBelow:Array = GetItemsBelowDescription(itemCard, processedTextField);	
+			var itemBelow:Number;	
+			for (itemBelow = 0; itemBelow < itemsBelow.length; itemBelow++)
+			{
+				itemsBelow[itemBelow]._y = itemsBelow[itemBelow]._y + (processedTextField._height - oldDescrptionHeight);
+			}	
+		}
     }
 
     function appendImageToEnd(textField:TextField, imageName:String, width:Number, height:Number)
@@ -300,14 +518,14 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     // SkyUI Made this private, so I had to recreate it
     private function SKYUI_shouldProcessItemsListInput(abCheckIfOverRect: Boolean): Boolean
     {
-        var process = _root.Menu_mc.bFadedIn == true && _root.Menu_mc.inventoryLists.currentState == SHOW_PANEL && _root.Menu_mc.inventoryLists.itemList.itemCount > 0 && !_root.Menu_mc.inventoryLists.itemList.disableSelection && !_root.Menu_mc.inventoryLists.itemList.disableInput;
+        var process = rootMenuInstance.bFadedIn == true && rootMenuInstance.inventoryLists.currentState == SHOW_PANEL && rootMenuInstance.inventoryLists.itemList.itemCount > 0 && !rootMenuInstance.inventoryLists.itemList.disableSelection && !rootMenuInstance.inventoryLists.itemList.disableInput;
 
         if (process && _platform == 0 && abCheckIfOverRect) {
             var e = Mouse.getTopMostEntity();
             var found = false;
             
             while (!found && e != undefined) {
-                if (e == _root.Menu_mc.inventoryLists.itemList)
+                if (e == rootMenuInstance.inventoryLists.itemList)
                     found = true;
                     
                 e = e._parent;
@@ -326,7 +544,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             return true;
         
         for (var e = Mouse.getTopMostEntity(); e != undefined; e = e._parent)
-            if (e.itemIndex == _root.Menu_mc.inventoryLists.itemList.selectedIndex)
+            if (e.itemIndex == rootMenuInstance.inventoryLists.itemList.selectedIndex)
                 return true;
                 
         return false;
@@ -351,13 +569,13 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         
         if (isSkyui)
         {
-            entryList = _root.Menu_mc.inventoryLists.itemList._entryList;
-            selectedIndex = _root.Menu_mc.inventoryLists.itemList._selectedIndex;
+            entryList = rootMenuInstance.inventoryLists.itemList._entryList;
+            selectedIndex = rootMenuInstance.inventoryLists.itemList._selectedIndex;
         }
         else //Vanilla
         {
-            entryList = _root.Menu_mc.InventoryLists_mc._ItemsList.EntriesA;
-            selectedIndex = _root.Menu_mc.InventoryLists_mc._ItemsList.iSelectedIndex;      
+            entryList = rootMenuInstance.InventoryLists_mc._ItemsList.EntriesA;
+            selectedIndex = rootMenuInstance.InventoryLists_mc._ItemsList.iSelectedIndex;      
         }   
         
         type = itemCard.itemInfo.type;
@@ -367,7 +585,8 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             
         _global.skse.plugins.AHZmoreHUDInventory.AHZLog("--.CheckBook", false);                 
             
-        entryList[selectedIndex].flags |= BOOKFLAG_READ;
+		// Just can't set the flag here because it breaks when reading spell tomes.	
+        //entryList[selectedIndex].flags |= BOOKFLAG_READ;
         UpdateItemCardInfo(itemCard.itemInfo);  
     }
 
@@ -380,7 +599,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         if (!isSkyui)
         {
             // If a transfer is occurring in the vanilla menu
-            if (isViewingContainer() && _root.Menu_mc.bShowEquipButtonHelp == false)
+            if (isViewingContainer() && rootMenuInstance.bShowEquipButtonHelp == false)
             {
                 return;
             }
@@ -403,7 +622,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         if (!isSkyui)
         {
             // If a transfer is occurring in the vanilla menu
-            if (isViewingContainer() && _root.Menu_mc.bShowEquipButtonHelp == false)
+            if (isViewingContainer() && rootMenuInstance.bShowEquipButtonHelp == false)
             {
                 return;
             }
@@ -420,7 +639,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         }
         else
         {
-            if (!_root.Menu_mc.ShouldProcessItemsListInput(processInput)) {
+            if (!rootMenuInstance.ShouldProcessItemsListInput(processInput)) {
                 return;
             }
         }
@@ -432,7 +651,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     {
         if (!isSkyui)
         {
-            iSelectedCategory = _root.Menu_mc.InventoryLists_mc.CategoriesList.selectedIndex;
+            iSelectedCategory = rootMenuInstance.InventoryLists_mc.CategoriesList.selectedIndex;
         }
     }   
     
@@ -449,11 +668,11 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         // Vanilla and SKYUI have different methods for detecting whether in the player menu or the container menu
         if (isSkyui)
         {
-            isInViewContainer =  (_root.Menu_mc.inventoryLists.categoryList.activeSegment == 0);
+            isInViewContainer =  (rootMenuInstance.inventoryLists.categoryList.activeSegment == 0);
         }
         else
         {
-            var dividerIdx: Number = _root.Menu_mc.InventoryLists_mc.CategoriesList.dividerIndex;
+            var dividerIdx: Number = rootMenuInstance.InventoryLists_mc.CategoriesList.dividerIndex;
             isInViewContainer =  dividerIdx != undefined && iSelectedCategory < dividerIdx;
         }
         
@@ -489,23 +708,27 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     }
 
     // A hook to update the item card with extended items
+	// Note this function does not get called by the crafting menus.  If we need to extend
+	// the crafting menu, I need to find another way.  I found no publically accessable hooks
+	// in the crafting menu.
     function UpdateItemCardInfo(aUpdateObj: Object): Void
     {       
         _global.skse.plugins.AHZmoreHUDInventory.AHZLog("-->UpdateItemCardInfo", false);
         var entryList:Object;
         var selectedIndex:Number;
         var type:Number;
+		var itemCardFrame:Number = itemCard._currentframe;
         if (isSkyui)
         {
-            entryList = _root.Menu_mc.inventoryLists.itemList._entryList;
-            selectedIndex = _root.Menu_mc.inventoryLists.itemList._selectedIndex;
+            entryList = rootMenuInstance.inventoryLists.itemList._entryList;
+            selectedIndex = rootMenuInstance.inventoryLists.itemList._selectedIndex;
         }
         else //Vanilla
         {
-            entryList = _root.Menu_mc.InventoryLists_mc._ItemsList.EntriesA;
-            selectedIndex = _root.Menu_mc.InventoryLists_mc._ItemsList.iSelectedIndex;      
+            entryList = rootMenuInstance.InventoryLists_mc._ItemsList.EntriesA;
+            selectedIndex = rootMenuInstance.InventoryLists_mc._ItemsList.iSelectedIndex;      
         }
-        
+        		
         type = itemCard.itemInfo.type;
         iconHolder.text = "";
 
@@ -514,30 +737,42 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             AdjustItemCard(_lastFrame);
         }         
 
+		// No extended data to process for the magic menu at this time
+		if (_currentMenu == "MagicMenu")
+		{
+			return;
+		}
+
+		
+		// Keep icons off of frames like the confirmation frame etc.
+		if (itemCardFrame >= _frameDefines.EMPTY_LOW && itemCardFrame <= _frameDefines.EMPTY_HIGH)
+		{
+			return;
+		}
+
         if (type != ICT_BOOK && type != ICT_ARMOR && type != ICT_WEAPON && type != ICT_POTION)
         {
             return;
         }
-
-        if (entryList[selectedIndex].AHZItemCardObj)
-        {
-            if (entryList[selectedIndex].AHZItemCardObj.enchantmentKnown)
-            {
-                appendImageToEnd(iconHolder, "ahzknown.png", 20,20);
-            }
-            else if ((entryList[selectedIndex].flags & BOOKFLAG_READ) == BOOKFLAG_READ)
-            {
-                if (_global.skse.plugins.AHZmoreHUDInventory.ShowBookRead())
-                {
-                    appendImageToEnd(iconHolder, "eyeImage.png", 20,20);
-                }
-            }
-            else if (entryList[selectedIndex].AHZItemCardObj.bookSkill &&
-                     String(entryList[selectedIndex].AHZItemCardObj.bookSkill).length )
-            {
-                iconHolder.text = String(entryList[selectedIndex].AHZItemCardObj.bookSkill.toUpperCase());
-            }
-        }
+		
+		if (entryList[selectedIndex].AHZItemCardObj.enchantmentKnown)
+		{
+			appendImageToEnd(iconHolder, "ahzknown.png", 20,20);
+		}
+		// Fortunately, extraData is not required for getting the Book Read Status.  This allows us to check
+		// it in real time and make sure the read status is accurate
+		else if (_global.skse.plugins.AHZmoreHUDInventory.GetWasBookRead(entryList[selectedIndex].formId))
+		{
+			if (_global.skse.plugins.AHZmoreHUDInventory.ShowBookRead())
+			{
+				appendImageToEnd(iconHolder, "eyeImage.png", 20,20);
+			}
+		}
+		else if (entryList[selectedIndex].AHZItemCardObj.bookSkill &&
+				 String(entryList[selectedIndex].AHZItemCardObj.bookSkill).length )
+		{
+			iconHolder.text = String(entryList[selectedIndex].AHZItemCardObj.bookSkill.toUpperCase());
+		}
     }
 
     function appendHtmlToEnd(htmlText:String, appendedHtml:String):String
