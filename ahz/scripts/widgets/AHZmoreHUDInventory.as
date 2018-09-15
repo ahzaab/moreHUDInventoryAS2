@@ -134,18 +134,21 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     function GetItemsBelowDescription(targetMovie:MovieClip, targetTextField: TextField):Array
     {
         var arr:Array = new Array();
+				
         for (var i in targetMovie)
         {
             if (targetMovie[i] instanceof TextField)
             {
-                if (TextField(targetMovie[i])._y > targetTextField._y)
+				var target:TextField = TextField(targetMovie[i]);
+                if (target._y > targetTextField._y && target._parent == targetMovie)
                 {
                     arr.push(TextField(targetMovie[i]));
                 }
             }
             else if (targetMovie[i] instanceof MovieClip)
             {
-                if (MovieClip(targetMovie[i])._y > targetTextField._y)
+				var target:MovieClip = MovieClip(targetMovie[i]);
+                if (target._y > targetTextField._y && target._parent == targetMovie)
                 {
                     arr.push(MovieClip(targetMovie[i]));
                 }
@@ -364,6 +367,23 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
                 appendImageToEnd(iconHolder, "eyeImage.png", 20,20);
             }
         }
+		
+		// If we advance to somethine like the confirmation frame, then make sure the icons are not visible
+		// Dont wipe the value because we need to restore it when returning to the same item card
+		if (itemCard._currentframe >= _frameDefines.EMPTY_LOW && itemCard._currentframe <= _frameDefines.EMPTY_HIGH)
+		{
+			iconHolder._alpha = 0;
+		}
+		else
+		{
+			iconHolder._alpha = 100;
+		}				
+		
+		// Make sure this movie clip does not stay visible
+		if (rootMenuInstance._alpha == 0 || itemCard._alpha == 0)
+		{
+			this._alpha = 0;
+		}	
     }
 
     function ResetIconText()
