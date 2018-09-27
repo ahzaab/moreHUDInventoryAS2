@@ -40,6 +40,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     private var _selectedItem:Object;
     private var _lastItemCardVisibility:Boolean;
     private var _readyToUpdate:Boolean = false;
+	private var _imageSubs:Array;
 
     // Statics
     private static var hooksInstalled:Boolean = false;
@@ -156,7 +157,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         }
         return arr;
     }
-
+	
     public function AHZmoreHUDInventory()
     {
         super();
@@ -363,10 +364,19 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             _global.skse.plugins.AHZmoreHUDInventory.ShowBookRead() &&
             _global.skse.plugins.AHZmoreHUDInventory.GetWasBookRead(_selectedItem.formId))
             {
-                iconHolder.text = "";
-                appendImageToEnd(iconHolder, "eyeImage.png", 20,20);
-            }
-        }
+                if (iconHolder.html){
+					iconHolder.htmlText = appendHtmlToEnd(iconHolder.htmlText, "[eyeImage.png]");
+				}
+				else{
+					iconHolder.text += "[eyeImage.png]";
+				}
+				addImageSub("eyeImage.png", 20,20);
+				if (_imageSubs.length)
+				{
+					iconHolder.setImageSubstitutions(_imageSubs);
+				}	
+			}
+		}
 		
 		// If we advance to somethine like the confirmation frame, then make sure the icons are not visible
 		// Dont wipe the value because we need to restore it when returning to the same item card
@@ -566,20 +576,53 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         }
     }
 
-    function appendImageToEnd(textField:TextField, imageName:String, width:Number, height:Number)
-    {
-        if (textField.text.indexOf("[" + imageName + "]") < 0)
-        {
-            var b1 = BitmapData.loadBitmap(imageName);
-            if (b1)
-            {
-                var a = new Array;
-                a[0] = { subString:"[" + imageName + "]", image:b1, width:width, height:height, id:"id" + imageName };  //baseLineY:0,
-                textField.setImageSubstitutions(a);
-                textField.text = textField.text + " " + "[" + imageName + "]";
-            }
-        }
-    }
+	function getImageSub(imageName:String):Object
+	{
+		var i:Number;
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("--getImageSub--", false);
+        for (i = 0; i < _imageSubs.length; i++)
+		{
+			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("    _imageSubs[" + i + "]:" + _imageSubs[i], false);
+			for (var o in _imageSubs[i])
+			{
+				_global.skse.plugins.AHZmoreHUDInventory.AHZLog("      o:" + _imageSubs[i][o], false);
+			}
+			if (_imageSubs[i].subString && _imageSubs[i].subString == "[" + imageName + "]")
+			{
+				return _imageSubs[i];
+			}
+		}
+		
+		return null;
+	}
+
+	function removeImageSub(imageName:String)
+	{
+		var i:Number;
+        for (i = 0; i < _imageSubs.length; i++)
+		{
+			if (_imageSubs[i].subString && _imageSubs[i].subString == "[" + imageName + "]")
+			{
+				_imageSubs = _imageSubs.splice(i,1);
+			}
+		}
+	}
+
+	function addImageSub(imageName:String, imageWidth:Number, imageHeight:Number)
+	{
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("--addImageSub--", false);
+		if (getImageSub(imageName))   // Already exists
+		{
+			return;
+		}
+		
+	 	var loadedImage:BitmapData = BitmapData.loadBitmap(imageName);
+		
+		if (loadedImage)
+		{
+			_imageSubs.push({ subString:"[" + imageName + "]", image:loadedImage, width:imageWidth, height:imageHeight, id:"id" + imageName });
+		}
+	}
 
     // A hook to update the item card with extended items
     // Note this function does not get called by the crafting menus.  If we need to extend
@@ -590,10 +633,10 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         _global.skse.plugins.AHZmoreHUDInventory.AHZLog("-->UpdateItemCardInfo", false);
         var type:Number;
         var itemCardFrame:Number = itemCard._currentframe;
-
+		_imageSubs = new Array();
         type = itemCard.itemInfo.type;
         ResetIconText();
-
+		
         if (_enableItemCardResize)
         {
             AdjustItemCard(_lastFrame);
@@ -618,7 +661,9 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
         if (_selectedItem.AHZItemCardObj.enchantmentKnown)
         {
-            appendImageToEnd(iconHolder, "ahzknown.png", 20,20);
+			addImageSub("ahzknown.png", 20,20);
+			iconHolder.text += "[ahzknown.png]"; 
+            //appendImageToEnd(iconHolder, "ahzknown.png", 20,20);
         }
         // Fortunately, extraData is not required for getting the Book Read Status.  This allows us to check
         // it in real time and make sure the read status is accurate
@@ -626,7 +671,9 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         {
             if (_global.skse.plugins.AHZmoreHUDInventory.ShowBookRead())
             {
-                appendImageToEnd(iconHolder, "eyeImage.png", 20,20);
+				addImageSub("eyeImage.png", 20,20);
+				iconHolder.text += "[eyeImage.png]";
+                //appendImageToEnd(iconHolder, "eyeImage.png", 20,20);
             }
         }
         else if (_selectedItem.AHZItemCardObj.bookSkill &&
@@ -657,20 +704,47 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
                 }
                 strEffects = appendHtmlToEnd(strEffects, "<font face=\'$EverywhereBoldFont\' size=\'6\' color=\'#FF0000\'> [Poison.png]</font>");
                 strEffects = appendHtmlToEnd(strEffects, "<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'#FF0000\'> " + _selectedItem.AHZItemCardObj.NegEffects + "</font>");
-
             }
 
-            var b1 = BitmapData.loadBitmap("Health.png");
-            var b2 = BitmapData.loadBitmap("Poison.png");
+            //var b1 = BitmapData.loadBitmap("Health.png");
+            //var b2 = BitmapData.loadBitmap("Poison.png");
 
-            var a = new Array;
-            var imageName:String = "Health.png";
-            a.push({ subString:"[" + imageName + "]", image:b1, width:16, height:16, id:"id" + imageName });  //baseLineY:0,
-            imageName = "Poison.png";
-            a.push({ subString:"[" + imageName + "]", image:b2, width:16, height:16, id:"id" + imageName });  //baseLineY:0,
-            iconHolder.setImageSubstitutions(a);
+            //var a = new Array;
+            //var imageName:String = "Health.png";
+            //a.push({ subString:"[" + imageName + "]", image:b1, width:16, height:16, id:"id" + imageName });  //baseLineY:0,
+            //imageName = "Poison.png";
+            //a.push({ subString:"[" + imageName + "]", image:b2, width:16, height:16, id:"id" + imageName });  //baseLineY:0,
+			
+			addImageSub("Health.png", 20,20);
+			addImageSub("Poison.png", 20,20);
+			
+            //iconHolder.setImageSubstitutions(a);
             iconHolder.htmlText = strEffects;
         }
+		
+		
+		if (_selectedItem.AHZItemIcon)
+		{
+			var customIcon = string(_selectedItem.AHZItemIcon);
+			addImageSub(_selectedItem.AHZItemIcon, 20,20);
+			
+			if (getImageSub(_selectedItem.AHZItemIcon))
+			{
+				if (iconHolder.html) 
+				{
+					iconHolder.htmlText = appendHtmlToEnd(iconHolder.htmlText, "[" + _selectedItem.AHZItemIcon + "]");
+				}
+				else
+				{
+					iconHolder.text += "[" + _selectedItem.AHZItemIcon + "]";
+				}
+			}
+		}
+		
+		if (_imageSubs.length)
+		{
+			iconHolder.setImageSubstitutions(_imageSubs);
+		}	
     }
 
     function appendHtmlToEnd(htmlText:String, appendedHtml:String):String
