@@ -398,6 +398,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
     function ResetIconText()
     {
+		iconHolder.setImageSubstitutions(null);
         iconHolder.html = false;
         iconHolder.verticalAlign = "center";
         iconHolder.textAutoSize = "shrink";
@@ -585,7 +586,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("    _imageSubs[" + i + "]:" + _imageSubs[i], false);
 			for (var o in _imageSubs[i])
 			{
-				_global.skse.plugins.AHZmoreHUDInventory.AHZLog("      o:" + _imageSubs[i][o], false);
+				_global.skse.plugins.AHZmoreHUDInventory.AHZLog("      " + o + ":" + _imageSubs[i][o], false);
 			}
 			if (_imageSubs[i].subString && _imageSubs[i].subString == "[" + imageName + "]")
 			{
@@ -654,7 +655,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             return;
         }
 
-        if (type != ICT_BOOK && type != ICT_ARMOR && type != ICT_WEAPON && type != ICT_POTION && type != ICT_FOOD)
+        if (type != ICT_BOOK && type != ICT_ARMOR && type != ICT_WEAPON && type != ICT_POTION && type != ICT_FOOD && !_selectedItem.AHZItemIcon)
         {
             return;
         }
@@ -726,9 +727,10 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		if (_selectedItem.AHZItemIcon)
 		{
 			var customIcon = string(_selectedItem.AHZItemIcon);
-			addImageSub(_selectedItem.AHZItemIcon, 20,20);
+			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Setting Image Sub for " + customIcon, false);
+			addImageSub(customIcon, 32,32);
 			
-			if (getImageSub(_selectedItem.AHZItemIcon))
+			if (getImageSub(customIcon))
 			{
 				if (iconHolder.html) 
 				{
@@ -743,6 +745,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		
 		if (_imageSubs.length)
 		{
+			
 			iconHolder.setImageSubstitutions(_imageSubs);
 		}	
     }
