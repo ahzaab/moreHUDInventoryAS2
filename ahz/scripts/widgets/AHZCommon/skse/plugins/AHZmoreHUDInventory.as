@@ -7,4 +7,5 @@ intrinsic class skse.plugins.AHZmoreHUDInventory
     static function GetCurrentMenu():String;
 	static function EnableItemCardResize():Boolean;
 	static function GetWasBookRead():Boolean;
+	static function GetIconForItemId(formId: Number, formName:String, returnValue:Object):Void;	
 }

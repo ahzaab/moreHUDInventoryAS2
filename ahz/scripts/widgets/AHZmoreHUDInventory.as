@@ -637,16 +637,11 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		_imageSubs = new Array();
         type = itemCard.itemInfo.type;
         ResetIconText();
+		var iconName:String;
 		
         if (_enableItemCardResize)
         {
             AdjustItemCard(_lastFrame);
-        }
-
-        // No extended data to process for the magic menu at this time
-        if (_currentMenu == "MagicMenu")
-        {
-            return;
         }
 
         // Keep icons off of frames like the confirmation frame etc.
@@ -655,7 +650,28 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             return;
         }
 
-        if (type != ICT_BOOK && type != ICT_ARMOR && type != ICT_WEAPON && type != ICT_POTION && type != ICT_FOOD && !_selectedItem.AHZItemIcon)
+        // Magic Menu cannot be extended by plugins so call a function to get the iconName
+        if (_currentMenu == "MagicMenu")
+        {
+			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Getting Magic Item", false);			
+			for (var o in _selectedItem)
+			{
+				_global.skse.plugins.AHZmoreHUDInventory.AHZLog("      " + o + ":" + _selectedItem[o], false);
+			}			
+			
+			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Getting Magic Item " + _selectedItem.formId, false);
+            var returnValue:Object = {returnObject:{itemIcon:""}}
+			_global.skse.plugins.AHZmoreHUDInventory.GetIconForItemId(_selectedItem.formId, _selectedItem.text, returnValue);	
+			iconName = returnValue.returnObject.iconName;
+			
+			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("iconName: " + iconName, false);
+            
+			if (!iconName || !iconName.length)
+			{
+				return
+			}
+        }
+        else if (type != ICT_BOOK && type != ICT_ARMOR && type != ICT_WEAPON && type != ICT_POTION && type != ICT_FOOD && !_selectedItem.AHZItemIcon)
         {
             return;
         }
@@ -724,9 +740,18 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         }
 		
 		
-		if (_selectedItem.AHZItemIcon)
+		if (_selectedItem.AHZItemIcon || (iconName && iconName.length))
 		{
-			var customIcon = string(_selectedItem.AHZItemIcon);
+			var customIcon:String;
+			if (iconName && iconName.length)
+			{
+				customIcon = string(iconName);
+			}
+			else
+			{
+				customIcon = string(_selectedItem.AHZItemIcon);
+			}
+			
 			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Setting Image Sub for " + customIcon, false);
 			addImageSub(customIcon, 32,32);
 			
@@ -734,11 +759,11 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			{
 				if (iconHolder.html) 
 				{
-					iconHolder.htmlText = appendHtmlToEnd(iconHolder.htmlText, "[" + _selectedItem.AHZItemIcon + "]");
+					iconHolder.htmlText = appendHtmlToEnd(iconHolder.htmlText, "[" + customIcon + "]");
 				}
 				else
 				{
-					iconHolder.text += "[" + _selectedItem.AHZItemIcon + "]";
+					iconHolder.text += "[" + customIcon + "]";
 				}
 			}
 		}
