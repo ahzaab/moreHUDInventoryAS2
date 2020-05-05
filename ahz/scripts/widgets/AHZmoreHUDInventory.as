@@ -1,7 +1,9 @@
 ﻿import ahz.scripts.widgets.AHZDefines.AHZCCSkyUIFrames;
 import ahz.scripts.widgets.AHZDefines.AHZCCSurvFrames;
 import ahz.scripts.widgets.AHZDefines.AHZVanillaFrames;
+import ahz.scripts.widgets.AHZmoreHUDInventoryIcons;
 import flash.display.BitmapData;
+import flash.filters.DropShadowFilter;
 import mx.managers.DepthManager;
 
 class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
@@ -12,7 +14,10 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     public var rootMenuInstance:MovieClip;
     public var cardBackground:MovieClip;
     public var additionDescriptionHolder:MovieClip;
+	public var IconLoader:AHZIconContainer;
     var iconTextFormat:TextFormat;
+	var icons:AHZmoreHUDInventoryIcons;
+	
     // Public vars
 
     // Options
@@ -43,6 +48,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     private var _readyToUpdate:Boolean = false;
 	private var _imageSubs:Array;
 	private var LoadedLargeItemCard_mc:MovieClip;
+	private var LoadedIcons_mc:AHZmoreHUDInventoryIcons;
 	private var _config:Object;
 	public var ICBackground_mc:MovieClip;
 	private var mcLoader:MovieClipLoader;
@@ -163,10 +169,31 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         return arr;
     }
 	
+	private var iconContainer:AHZIconContainer;
+	
+	public function iconsLoaded(event:Object):Void
+	{
+		
+	}
+	
+	public function iconsLoadedError(event:Object):Void
+	{
+		
+	}
+	
     public function AHZmoreHUDInventory()
     {
         super();
-        this._alpha = 0;
+        this._alpha = 100;
+		
+            _global.skse.plugins.AHZmoreHUDInventory.AHZLog("Loading iconContainer", false);		
+		
+	
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("iconContainer: " + iconContainer , false);		
+		
+		IconLoader = new AHZIconContainer();
+		IconLoader.loadIcons('baseIcons.swf', this, "iconsLoaded", "iconsLoadedError");		
+				
         _currentMenu = _global.skse.plugins.AHZmoreHUDInventory.GetCurrentMenu();
 
         // Sneak in the main menu and enable extended data before any inventory menu can load
@@ -175,6 +202,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             _global.skse.plugins.AHZmoreHUDInventory.AHZLog(
                 "AHZmoreHUDInventory turning on extended data.", true);
             _global.skse.ExtendData(true);
+			
             return;
         }
 
@@ -202,7 +230,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		{
 			LoadedLargeItemCard_mc = ICBackground_mc;
 			clipReady();
-		}
+		}	
 	}
 
 	function prepareConfigs() :Void{
@@ -258,6 +286,10 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			LoadedLargeItemCard_mc = ICBackground_mc;
 		}
 		
+		
+
+		
+		
 		this._yscale = _config[AHZDefines.CFG_LIC_YSCALE] * 100;
 		this._xscale = _config[AHZDefines.CFG_LIC_XSCALE] * 100;
 		
@@ -312,6 +344,12 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
                 "Could not obtain a reference to the item card.", true)
             return;
         }
+
+		var filter:DropShadowFilter = new DropShadowFilter(2,45,0,100,2,2,1.5);
+		var filterArray:Array = new Array();
+  		filterArray.push(filter);
+		iconHolder.filters = filterArray;
+
 
         _global.skse.plugins.AHZmoreHUDInventory.AHZLog("Frame Count: " + itemCard._totalframes, false);
 
@@ -423,13 +461,13 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
             if (_itemCardOverride)
             {
-                this._alpha = itemCard._alpha - (100 - _config[AHZDefines.CFG_LIC_ALPHA]);
-                cardBackground._alpha = 0;
+				cardBackground.visible = false;
+                this._alpha = itemCard._alpha - (100 - _config[AHZDefines.CFG_LIC_ALPHA]);				
             }
             else
             {
                 this._alpha = 0;
-                cardBackground._alpha = _config[AHZDefines.CFG_LIC_ALPHA];
+				cardBackground.visible = true;
             }
         }
 
@@ -603,8 +641,9 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             default:
                 {
                     processedTextField = undefined;
-                    cardBackground._alpha = _config[AHZDefines.CFG_LIC_ALPHA];
-                    this._alpha = 0;
+                    //cardBackground._alpha = _config[AHZDefines.CFG_LIC_ALPHA];
+					this._alpha = 0;
+                    cardBackground.visible = true;
                 }
                 break;
         }
@@ -885,12 +924,14 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
 	public function onLoadInit(s_mc: MovieClip): Void
 	{
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("CLIP LOADED: " + LoadedLargeItemCard_mc, false);	
-		LoadedLargeItemCard_mc._alpha = 100;
-		LoadedLargeItemCard_mc.visible = true;
-		LoadedLargeItemCard_mc._x = 0;
-		LoadedLargeItemCard_mc._y = 0;
-		clipReady();
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("CLIP LOADED: " + LoadedLargeItemCard_mc, true);	
+		s_mc.gotoAndStop(0);
+		
+		
+		if (LoadedLargeItemCard_mc == s_mc)
+		{
+			clipReady();
+		}
 	}
 	
 	public function onLoadError(s_mc:MovieClip, a_errorCode: String): Void
