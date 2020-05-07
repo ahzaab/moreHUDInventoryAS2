@@ -5,6 +5,7 @@ import ahz.scripts.widgets.AHZmoreHUDInventoryIcons;
 import flash.display.BitmapData;
 import flash.filters.DropShadowFilter;
 import mx.managers.DepthManager;
+import flash.filters.DropShadowFilter;
 
 class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 {
@@ -355,19 +356,19 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
         if (itemCard._totalframes >= AHZCCSurvFrames.MAX_FRAMES)
         {
-            _global.skse.plugins.AHZmoreHUDInventory.AHZLog("Survival Card Detected", true);
+            _global.skse.plugins.AHZmoreHUDInventory.AHZLog("Survival Card Detected", false);
             _isCCSurvCard = true;
             _frameDefines = AHZCCSurvFrames;
         }
         else if (itemCard._totalframes >= AHZCCSkyUIFrames.MAX_FRAMES)
         {
-            _global.skse.plugins.AHZmoreHUDInventory.AHZLog("SkyUI Survival Integration Card Detected", true);
+            _global.skse.plugins.AHZmoreHUDInventory.AHZLog("SkyUI Survival Integration Card Detected", false);
             _isCCSurvCard = true;
             _frameDefines = AHZCCSkyUIFrames;
         }
         else
         {
-            _global.skse.plugins.AHZmoreHUDInventory.AHZLog("Vanilla Card Detected", true);
+            _global.skse.plugins.AHZmoreHUDInventory.AHZLog("Vanilla Card Detected", false);
             _isCCSurvCard = false;
             _frameDefines = AHZVanillaFrames;
         }
@@ -461,13 +462,15 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
             if (_itemCardOverride)
             {
-				cardBackground.visible = false;
-                this._alpha = itemCard._alpha - (100 - _config[AHZDefines.CFG_LIC_ALPHA]);				
+	
+                cardBackground._alpha = 0;				
+                this._alpha = itemCard._alpha - (100 - _config[AHZDefines.CFG_LIC_ALPHA]);
             }
             else
             {
                 this._alpha = 0;
-				cardBackground.visible = true;
+
+                cardBackground._alpha = _config[AHZDefines.CFG_LIC_ALPHA];
             }
         }
 
@@ -641,9 +644,8 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             default:
                 {
                     processedTextField = undefined;
-                    //cardBackground._alpha = _config[AHZDefines.CFG_LIC_ALPHA];
 					this._alpha = 0;
-                    cardBackground.visible = true;
+                    cardBackground._alpha = _config[AHZDefines.CFG_LIC_ALPHA];
                 }
                 break;
         }
