@@ -5,17 +5,17 @@ import ahz.scripts.widgets.AHZmoreHUDInventoryIcons;
 import flash.display.BitmapData;
 import flash.filters.DropShadowFilter;
 import mx.managers.DepthManager;
-import flash.filters.DropShadowFilter;
 
 class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 {
     //Widgets
     public var iconHolder: TextField;
+	public var iconHolder2: TextField;
     public var itemCard: MovieClip;
     public var rootMenuInstance:MovieClip;
     public var cardBackground:MovieClip;
     public var additionDescriptionHolder:MovieClip;
-	public var IconLoader:AHZIconContainer;
+	public var IconContainer_mc:MovieClip;
     var iconTextFormat:TextFormat;
 	var icons:AHZmoreHUDInventoryIcons;
 	
@@ -170,11 +170,23 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         return arr;
     }
 	
-	private var iconContainer:AHZIconContainer;
+
 	
 	public function iconsLoaded(event:Object):Void
-	{
+	{		
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("iconsLoaded: " + event.tf)
+		IconContainer_mc.Clear();
+		//iconHolder2.html = true;
+		IconContainer_mc.text += "Testing";
+		IconContainer_mc.AppendImage("ahzKnown");
+		IconContainer_mc.text += "123";
+		IconContainer_mc.AppendImage("ahzEye");
+		IconContainer_mc.text += "test34";
+		IconContainer_mc.AppendImage("ahzHealth");
+		IconContainer_mc.text += "ending";
 		
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("iconHolder2.text: " + IconContainer_mc.text);
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("iconHolder2.htmltext: " + iconHolder2.htmlText)
 	}
 	
 	public function iconsLoadedError(event:Object):Void
@@ -188,12 +200,8 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         this._alpha = 100;
 		
             _global.skse.plugins.AHZmoreHUDInventory.AHZLog("Loading iconContainer", false);		
-		
-	
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("iconContainer: " + iconContainer , false);		
-		
-		IconLoader = new AHZIconContainer();
-		IconLoader.loadIcons('baseIcons.swf', this, "iconsLoaded", "iconsLoadedError");		
+		this._x = 200;
+		this._y = 200;		
 				
         _currentMenu = _global.skse.plugins.AHZmoreHUDInventory.GetCurrentMenu();
 
@@ -204,7 +212,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
                 "AHZmoreHUDInventory turning on extended data.", true);
             _global.skse.ExtendData(true);
 			
-            return;
+            //return;
         }
 
 		mcLoader = new MovieClipLoader();
@@ -305,7 +313,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         if (rootMenuInstance.itemCard)
         {
             itemCard = rootMenuInstance.itemCard;
-            iconHolder = itemCard.createTextField("iconHolder", itemCard.getNextHighestDepth(), 0, 10, itemCard._width, 32);
+            iconHolder = (itemCard.createTextField("iconHolder", itemCard.getNextHighestDepth(), 0, 10, itemCard._width, 32));
             _entryList = rootMenuInstance.inventoryLists.itemList._entryList;
             isSkyui = true;
         }
@@ -313,14 +321,14 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         else if (rootMenuInstance.ItemCard_mc)
         {
             itemCard = rootMenuInstance.ItemCard_mc;
-            iconHolder = itemCard.createTextField("iconHolder", itemCard.getNextHighestDepth(), 0, 20, itemCard._width, 22);
+            iconHolder = (itemCard.createTextField("iconHolder", itemCard.getNextHighestDepth(), 0, 20, itemCard._width, 22));
             _entryList = rootMenuInstance.InventoryLists_mc._ItemsList.EntriesA;
             isSkyui = false;
         }
         else if (_currentMenu == "Crafting Menu" && rootMenuInstance.ItemInfoHolder.ItemInfo)
         {
             itemCard = rootMenuInstance.ItemInfoHolder.ItemInfo;
-            iconHolder = itemCard.createTextField("iconHolder", itemCard.getNextHighestDepth(), 0, 20, itemCard._width, 22);
+            iconHolder = (itemCard.createTextField("iconHolder", itemCard.getNextHighestDepth(), 0, 20, itemCard._width, 22));
             additionDescriptionHolder = rootMenuInstance.ItemInfoHolder.AdditionalDescriptionHolder;
             if (rootMenuInstance.InventoryLists.ItemsListHolder.List_mc.EntriesA)
             {
@@ -525,13 +533,9 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		}	
     }
 
-    function ResetIconText()
-    {
-		iconHolder.setImageSubstitutions(null);
-        iconHolder.html = false;
-        iconHolder.verticalAlign = "center";
-        iconHolder.textAutoSize = "shrink";
-        iconHolder.multiLine = false;
+    function ResetIconText():Void
+	{
+    	iconHolder.Clear();
         iconHolder.setNewTextFormat(iconTextFormat);
         iconHolder.text = "";
     }
@@ -922,6 +926,8 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     public function onLoad():Void
     {
         super.onLoad();
+		IconContainer_mc = this._parent.IconContainer_mc;
+		IconContainer_mc.Load('baseIcons.swf', this, "iconsLoaded", "iconsLoadedError");		
     }
 
 	public function onLoadInit(s_mc: MovieClip): Void
