@@ -9,8 +9,6 @@ import mx.managers.DepthManager;
 class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 {
     //Widgets
-    public var iconHolder: TextField;
-	public var iconHolder2: TextField;
     public var itemCard: MovieClip;
     public var rootMenuInstance:MovieClip;
     public var cardBackground:MovieClip;
@@ -174,22 +172,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 	
 	public function iconsLoaded(event:Object):Void
 	{		
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("iconsLoaded: " + event.tf)
 		IconContainer_mc.Clear();
-		//iconHolder2.html = true;
-		IconContainer_mc.text += "Testing";
-		IconContainer_mc.AppendImage("ahzKnown");
-		IconContainer_mc.text += "123";
-		IconContainer_mc.AppendImage("ahzEye");
-		IconContainer_mc.text += "test34";
-		IconContainer_mc.AppendImage("ahzHealth");
-		IconContainer_mc.text += "ending";
-		IconContainer_mc.AppendImage("ahzPoison");
-		IconContainer_mc.text += "wwertt";
-		IconContainer_mc.AppendImage("iEquipQB.png");
-		
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("iconHolder2.text: " + IconContainer_mc.text);
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("iconHolder2.htmltext: " + iconHolder2.htmlText)
 	}
 	
 	public function iconsLoadedError(event:Object):Void
@@ -200,11 +183,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
     public function AHZmoreHUDInventory()
     {
         super();
-        this._alpha = 100;
-		
-            _global.skse.plugins.AHZmoreHUDInventory.AHZLog("Loading iconContainer", false);		
-		this._x = 200;
-		this._y = 200;		
+        this._alpha = 0;
 				
         _currentMenu = _global.skse.plugins.AHZmoreHUDInventory.GetCurrentMenu();
 
@@ -215,7 +194,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
                 "AHZmoreHUDInventory turning on extended data.", true);
             _global.skse.ExtendData(true);
 			
-            //return;
+            return;
         }
 
 		mcLoader = new MovieClipLoader();
@@ -275,6 +254,12 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			
 		if (!_config[AHZDefines.CFG_LIC_CRAFTING_YOFFSET])
 			_config[AHZDefines.CFG_LIC_CRAFTING_YOFFSET] = AHZ_CraftingMenuYShift;				
+						
+		if (!_config[AHZDefines.CFG_ICON_POS_EFFECT_COLOR])
+			_config[AHZDefines.CFG_ICON_POS_EFFECT_COLOR] = '#FF0000';	
+			
+		if (!_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR])
+			_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR] = '#189515';
 	}
 
 	function configLoaded(event:Object):Void{
@@ -297,11 +282,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		{
 			LoadedLargeItemCard_mc = ICBackground_mc;
 		}
-		
-		
 
-		
-		
 		this._yscale = _config[AHZDefines.CFG_LIC_YSCALE] * 100;
 		this._xscale = _config[AHZDefines.CFG_LIC_XSCALE] * 100;
 		
@@ -316,7 +297,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         if (rootMenuInstance.itemCard)
         {
             itemCard = rootMenuInstance.itemCard;
-            iconHolder = (itemCard.createTextField("iconHolder", itemCard.getNextHighestDepth(), 0, 10, itemCard._width, 32));
+            //iconHolder = (itemCard.createTextField("iconHolder", itemCard.getNextHighestDepth(), 0, 10, itemCard._width, 32));
             _entryList = rootMenuInstance.inventoryLists.itemList._entryList;
             isSkyui = true;
         }
@@ -357,12 +338,6 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             return;
         }
 
-		var filter:DropShadowFilter = new DropShadowFilter(2,45,0,100,2,2,1.5);
-		var filterArray:Array = new Array();
-  		filterArray.push(filter);
-		iconHolder.filters = filterArray;
-
-
         _global.skse.plugins.AHZmoreHUDInventory.AHZLog("Frame Count: " + itemCard._totalframes, false);
 
         if (itemCard._totalframes >= AHZCCSurvFrames.MAX_FRAMES)
@@ -389,21 +364,6 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
             _global.skse.plugins.AHZmoreHUDInventory.InstallHooks();
             hooksInstalled = true;
         }
-
-        // Creation the text field that holds the extra data
-        iconHolder.verticalAlign = "center";
-        iconHolder.textAutoSize = "shrink";
-        iconHolder.multiLine = false;
-
-        iconTextFormat = new TextFormat();
-        iconTextFormat.align = "center";
-        iconTextFormat.color = 0x999999;
-        iconTextFormat.indent = 20;
-        iconTextFormat.size = 24;
-        iconTextFormat.font = "$EverywhereMediumFont";
-        iconHolder.setNewTextFormat(iconTextFormat);
-        iconHolder.text = "";
-
         _enableItemCardResize = _global.skse.plugins.AHZmoreHUDInventory.EnableItemCardResize();
 
         if (_enableItemCardResize)
@@ -538,9 +498,9 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
     function ResetIconText():Void
 	{
-    	iconHolder.Clear();
-        iconHolder.setNewTextFormat(iconTextFormat);
-        iconHolder.text = "";
+    	IconHolder_mc.Clear();
+        IconHolder_mc.html = false;
+        IconHolder_mc.text = "";
     }
 
     function stringReplace(block:String, findStr:String, replaceStr:String):String
@@ -594,11 +554,11 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         // Dont wipe the value because we need to restore it when returning to the same item card
         if (itemCardFrame >= _frameDefines.EMPTY_LOW && itemCardFrame <= _frameDefines.EMPTY_HIGH)
         {
-            iconHolder._alpha = 0;
+            IconHolder_mc._alpha = 0;
         }
         else
         {
-            iconHolder._alpha = 100;
+            IconHolder_mc._alpha = 100;
         }
 
         switch (itemCardFrame)
@@ -770,7 +730,6 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         _global.skse.plugins.AHZmoreHUDInventory.AHZLog("-->UpdateItemCardInfo", false);
         var type:Number;
         var itemCardFrame:Number = itemCard._currentframe;
-		_imageSubs = new Array();
         type = itemCard.itemInfo.type;
         ResetIconText();
 		var iconName:String;
@@ -814,9 +773,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
         if (_selectedItem.AHZItemCardObj.enchantmentKnown)
         {
-			addImageSub("ahzknown.png", 20,20);
-			iconHolder.text += "[ahzknown.png]"; 
-            //appendImageToEnd(iconHolder, "ahzknown.png", 20,20);
+			IconHolder_mc.AppedImage("ahzKnown");
         }
         // Fortunately, extraData is not required for getting the Book Read Status.  This allows us to check
         // it in real time and make sure the read status is accurate
@@ -824,55 +781,44 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         {
             if (_global.skse.plugins.AHZmoreHUDInventory.ShowBookRead())
             {
-				addImageSub("eyeImage.png", 20,20);
-				iconHolder.text += "[eyeImage.png]";
-                //appendImageToEnd(iconHolder, "eyeImage.png", 20,20);
+				IconHolder_mc.AppedImage("ahzEye");
             }
         }
         else if (_selectedItem.AHZItemCardObj.bookSkill &&
                  String(_selectedItem.AHZItemCardObj.bookSkill).length )
         {
-            iconHolder.text = String(_selectedItem.AHZItemCardObj.bookSkill.toUpperCase());
+            IconHolder_mc.text = String(_selectedItem.AHZItemCardObj.bookSkill.toUpperCase());
         }
         else if (_selectedItem.AHZItemCardObj.PosEffects > 0||
                  _selectedItem.AHZItemCardObj.NegEffects > 0)
         {
             var strEffects:String;
             strEffects = "<TEXTFORMAT><P ALIGN=\'center\' >"
-                         strEffects += " </P></TEXTFORMAT>";
-            iconHolder.textAutoSize = "shrink";
-            iconHolder.html = true;
+            strEffects += " </P></TEXTFORMAT>";
+            
+            IconHolder_mc.html = true;
+			IconHolder_mc.htmlText = strEffects;
 
             if (_selectedItem.AHZItemCardObj.PosEffects > 0)
             {
-                strEffects = appendHtmlToEnd(strEffects, "<font face=\'$EverywhereBoldFont\' size=\'6\' color=\'#189515\'> [Health.png]</font>");
-                strEffects = appendHtmlToEnd(strEffects, "<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'#189515\'> " + _selectedItem.AHZItemCardObj.PosEffects + "</font>");
+                IconHolder_mc.htmlText = appendHtmlToEnd(IconHolder_mc.htmlText, "<font face=\'$EverywhereBoldFont\' size=\'6\' color=\'"+_config[AHZDefines.CFG_ICON_POS_EFFECT_COLOR]+"\'> ");
+				IconHolder_mc.AppendImage("ahzHealth");
+				IconHolder_mc.htmlText = appendHtmlToEnd(IconHolder_mc.htmlText, "</font>");
+                IconHolder_mc.htmlText = appendHtmlToEnd(IconHolder_mc.htmlText, "<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_POS_EFFECT_COLOR]+"\'> " + _selectedItem.AHZItemCardObj.PosEffects + "</font>");
 
             }
             if (_selectedItem.AHZItemCardObj.NegEffects > 0)
             {
+				// Add space if we have both
                 if (_selectedItem.AHZItemCardObj.PosEffects > 0)
                 {
-                    strEffects = appendHtmlToEnd(strEffects, "<font face=\'$EverywhereBoldFont\' size=\'10\' color=\'#FF0000\'>      </font>");
-                }
-                strEffects = appendHtmlToEnd(strEffects, "<font face=\'$EverywhereBoldFont\' size=\'6\' color=\'#FF0000\'> [Poison.png]</font>");
-                strEffects = appendHtmlToEnd(strEffects, "<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'#FF0000\'> " + _selectedItem.AHZItemCardObj.NegEffects + "</font>");
+                    IconHolder_mc.htmlText = appendHtmlToEnd(IconHolder_mc.htmlText,"<font face=\'$EverywhereBoldFont\' size=\'10\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'>      </font>");
+				}
+                IconHolder_mc.htmlText = appendHtmlToEnd(IconHolder_mc.htmlText,"<font face=\'$EverywhereBoldFont\' size=\'6\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'> ");
+				IconHolder_mc.AppendImage("ahzPoison");
+				IconHolder_mc.htmlText = appendHtmlToEnd(IconHolder_mc.htmlText, "</font>");
+                IconHolder_mc.htmlText = appendHtmlToEnd(IconHolder_mc.htmlText,"<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'> " + _selectedItem.AHZItemCardObj.NegEffects + "</font>");
             }
-
-            //var b1 = BitmapData.loadBitmap("Health.png");
-            //var b2 = BitmapData.loadBitmap("Poison.png");
-
-            //var a = new Array;
-            //var imageName:String = "Health.png";
-            //a.push({ subString:"[" + imageName + "]", image:b1, width:16, height:16, id:"id" + imageName });  //baseLineY:0,
-            //imageName = "Poison.png";
-            //a.push({ subString:"[" + imageName + "]", image:b2, width:16, height:16, id:"id" + imageName });  //baseLineY:0,
-			
-			addImageSub("Health.png", 20,20);
-			addImageSub("Poison.png", 20,20);
-			
-            //iconHolder.setImageSubstitutions(a);
-            iconHolder.htmlText = strEffects;
         }
 		
 		
@@ -882,32 +828,13 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			if (iconName && iconName.length)
 			{
 				customIcon = string(iconName);
+				IconHolder_mc.AppendImage(customIcon);
 			}
 			else
 			{
 				customIcon = string(_selectedItem.AHZItemIcon);
+				IconHolder_mc.AppendImage(customIcon);
 			}
-			
-			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Setting Image Sub for " + customIcon, false);
-			addImageSub(customIcon, 32,32);
-			
-			if (getImageSub(customIcon))
-			{
-				if (iconHolder.html) 
-				{
-					iconHolder.htmlText = appendHtmlToEnd(iconHolder.htmlText, "[" + customIcon + "]");
-				}
-				else
-				{
-					iconHolder.text += "[" + customIcon + "]";
-				}
-			}
-		}
-		
-		if (_imageSubs.length)
-		{
-			
-			iconHolder.setImageSubstitutions(_imageSubs);
 		}	
     }
 
