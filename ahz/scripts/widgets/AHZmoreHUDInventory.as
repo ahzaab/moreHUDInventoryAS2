@@ -184,6 +184,9 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		IconContainer_mc.text += "test34";
 		IconContainer_mc.AppendImage("ahzHealth");
 		IconContainer_mc.text += "ending";
+		IconContainer_mc.AppendImage("ahzPoison");
+		IconContainer_mc.text += "wwertt";
+		IconContainer_mc.AppendImage("iEquipQB.png");
 		
 		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("iconHolder2.text: " + IconContainer_mc.text);
 		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("iconHolder2.htmltext: " + iconHolder2.htmlText)
@@ -928,6 +931,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
         super.onLoad();
 		IconContainer_mc = this._parent.IconContainer_mc;
 		IconContainer_mc.Load('baseIcons.swf', this, "iconsLoaded", "iconsLoadedError");		
+		//iconsLoaded();
     }
 
 	public function onLoadInit(s_mc: MovieClip): Void
