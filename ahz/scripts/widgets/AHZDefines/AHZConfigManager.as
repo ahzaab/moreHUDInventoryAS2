@@ -36,7 +36,7 @@ class AHZConfigManager
 		_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("loadConfig end");
 	}
 		
-	public static funvtion ResolvePath(path;String]{
+	public static function ResolvePath(path:String):String{
 		if (!path){
 			return undefined;
 		}
