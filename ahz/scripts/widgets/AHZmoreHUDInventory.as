@@ -209,11 +209,11 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 	function initializeClips():Void
 	{
 		AttachIconHolder();
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("initializeClips", false);
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("this.ICBackground_mc: " + this.ICBackground_mc, false);
+		//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("initializeClips", false);
+		//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("this.ICBackground_mc: " + this.ICBackground_mc, false);
 		if (_config[AHZDefines.CFG_LIC_PATH])
 		{
-			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Loading: " + AHZConfigManager.ResolvePath(_config[AHZDefines.CFG_LIC_PATH]), false);
+			//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Loading: " + AHZConfigManager.ResolvePath(_config[AHZDefines.CFG_LIC_PATH]), false);
 			LoadedLargeItemCard_mc = this.createEmptyMovieClip("LoadedLargeItemCard_mc", ICBackground_mc.getDepth());
 			mcLoader.loadClip(AHZConfigManager.ResolvePath(_config[AHZDefines.CFG_LIC_PATH]), LoadedLargeItemCard_mc);
 
@@ -267,7 +267,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			tf.verticalAlign = "center";
 			tf.textAutoSize = "shrink";
 			tf.multiLine = false;
-			tf.border = true;
+			//tf.border = true;
 			_iconContainerTextFormat = new TextFormat();
 			_iconContainerTextFormat.align = "center";
 			_iconContainerTextFormat.color = 0x999999;
@@ -327,7 +327,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
 	function configLoaded(event:Object):Void
 	{
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("configLoaded: " + event, false);
+		//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("configLoaded: " + event, false);
 		_config = event.config;
 		prepareConfigs();
 		initializeClips();
@@ -335,7 +335,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
 	function configError(event:Object):Void
 	{
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("configError: " + event, false);
+		//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("configError: " + event, false);
 		prepareConfigs();
 		initializeClips();
 	}
@@ -354,7 +354,6 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		if (rootMenuInstance.itemCard)
 		{
 			itemCard = rootMenuInstance.itemCard;
-			//iconHolder = (itemCard.createTextField("iconHolder", itemCard.getNextHighestDepth(), 0, 10, itemCard._width, 32));
 			_entryList = rootMenuInstance.inventoryLists.itemList._entryList;
 			isSkyui = true;
 		}
@@ -362,14 +361,12 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		else if (rootMenuInstance.ItemCard_mc)
 		{
 			itemCard = rootMenuInstance.ItemCard_mc;
-			//iconHolder = (itemCard.createTextField("iconHolder", itemCard.getNextHighestDepth(), 0, 20, itemCard._width, 22));
 			_entryList = rootMenuInstance.InventoryLists_mc._ItemsList.EntriesA;
 			isSkyui = false;
 		}
 		else if (_currentMenu == "Crafting Menu" && rootMenuInstance.ItemInfoHolder.ItemInfo)
 		{
 			itemCard = rootMenuInstance.ItemInfoHolder.ItemInfo;
-			// iconHolder = (itemCard.createTextField("iconHolder", itemCard.getNextHighestDepth(), 0, 20, itemCard._width, 22));
 			additionDescriptionHolder = rootMenuInstance.ItemInfoHolder.AdditionalDescriptionHolder;
 			if (rootMenuInstance.InventoryLists.ItemsListHolder.List_mc.EntriesA)
 			{
@@ -395,7 +392,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			return;
 		}
 
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Frame Count: " + itemCard._totalframes, false);
+		//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Frame Count: " + itemCard._totalframes, false);
 
 		if (itemCard._totalframes >= AHZCCSurvFrames.MAX_FRAMES)
 		{
@@ -522,7 +519,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			_global.skse.plugins.AHZmoreHUDInventory.ShowBookRead() &&
 			_global.skse.plugins.AHZmoreHUDInventory.GetWasBookRead(_selectedItem.formId))
 			{
-				IconContainer.AppendImage("ahzEye");
+				IconContainer.appendImage("ahzEye");
 			}
 		}
 
@@ -551,7 +548,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		IconContainer.textField.verticalAlign = "center";
 		IconContainer.textField.textAutoSize = "shrink";
 		IconContainer.textField.multiLine = false;
-		IconContainer.textField.border = true;
+		//IconContainer.textField.border = true;
 		_iconContainerTextFormat = new TextFormat();
 		_iconContainerTextFormat.align = "center";
 		_iconContainerTextFormat.color = 0x999999;
@@ -748,7 +745,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 	// in the crafting menu.
 	function UpdateItemCardInfo(): Void
 	{
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("-->UpdateItemCardInfo", false);
+		//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("-->UpdateItemCardInfo", false);
 		var type:Number;
 		var itemCardFrame:Number = itemCard._currentframe;
 		type = itemCard.itemInfo.type;
@@ -769,18 +766,18 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		// Magic Menu cannot be extended by plugins so call a function to get the iconName
 		if (_currentMenu == "MagicMenu")
 		{
-			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Getting Magic Item", false);
-			for (var o in _selectedItem)
-			{
-				_global.skse.plugins.AHZmoreHUDInventory.AHZLog("      " + o + ":" + _selectedItem[o], false);
-			}
+			//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Getting Magic Item", false);
+			//for (var o in _selectedItem)
+			//{
+			//	_global.skse.plugins.AHZmoreHUDInventory.AHZLog("      " + o + ":" + _selectedItem[o], false);
+			//}
 
-			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Getting Magic Item " + _selectedItem.formId, false);
+			//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("Getting Magic Item " + _selectedItem.formId, false);
 			var returnValue:Object = {returnObject:{itemIcon:""}}
 									 _global.skse.plugins.AHZmoreHUDInventory.GetIconForItemId(_selectedItem.formId, _selectedItem.text, returnValue);
 			iconName = returnValue.returnObject.iconName;
 
-			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("iconName: " + iconName, false);
+			//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("iconName: " + iconName, false);
 
 			if (!iconName || !iconName.length)
 			{
@@ -794,7 +791,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
 		if (_selectedItem.AHZItemCardObj.enchantmentKnown)
 		{
-			IconContainer.AppendImage("ahzKnown");
+			IconContainer.appendImage("ahzKnown");
 		}
 		// Fortunately, extraData is not required for getting the Book Read Status.  This allows us to check
 		// it in real time and make sure the read status is accurate
@@ -802,7 +799,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		{
 			if (_global.skse.plugins.AHZmoreHUDInventory.ShowBookRead())
 			{
-				IconContainer.AppendImage("ahzEye");
+				IconContainer.appendImage("ahzEye");
 			}
 		}
 		else if (_selectedItem.AHZItemCardObj.bookSkill &&
@@ -813,38 +810,23 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		else if (_selectedItem.AHZItemCardObj.PosEffects > 0||
 				 _selectedItem.AHZItemCardObj.NegEffects > 0)
 		{
-			var strEffects:String;
-			strEffects = "<TEXTFORMAT><P ALIGN=\'center\' >"
-						 strEffects += " </P></TEXTFORMAT>";
-
 			IconContainer.html = true;
-			IconContainer.htmlText = strEffects;
 
 			if (_selectedItem.AHZItemCardObj.PosEffects > 0)
 			{
-				//IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText, "<font face=\'$EverywhereBoldFont\' size=\'6\' color=\'"+_config[AHZDefines.CFG_ICON_POS_EFFECT_COLOR]+"\'> ");
-				IconContainer.AppendImage("ahzHealth");
-				//IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText, "</font>");
-				IconContainer.appendHtml("<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_POS_EFFECT_COLOR]+"\'> " + _selectedItem.AHZItemCardObj.PosEffects + "</font>");
-				//IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText, "<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_POS_EFFECT_COLOR]+"\'> " + _selectedItem.AHZItemCardObj.PosEffects + "</font>");
-
+				IconContainer.appendImage("ahzHealth");
+				IconContainer.appendHtml("<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_POS_EFFECT_COLOR]+"\'>&nbsp;" + _selectedItem.AHZItemCardObj.PosEffects + "</font>");
 			}
 			if (_selectedItem.AHZItemCardObj.NegEffects > 0)
 			{
 				// Add space if we have both
 				if (_selectedItem.AHZItemCardObj.PosEffects > 0)
 				{
-					//IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText,"<font face=\'$EverywhereBoldFont\' size=\'10\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'>      </font>");
-					//IconContainer.appendHtml("<font face=\'$EverywhereBoldFont\' size=\'10\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'>\t</font>");
-					// For spacing
-					IconContainer.AppendImage("ahzEmpty");
+					IconContainer.appendHtml("<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_POS_EFFECT_COLOR]+"\'>&nbsp;&nbsp;&nbsp;</font>");
 				}
 				
-				//IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText,"<font face=\'$EverywhereBoldFont\' size=\'6\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'> ");
-				IconContainer.AppendImage("ahzPoison");
-				//IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText, "</font>");
-				//IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText,"<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'> " + _selectedItem.AHZItemCardObj.NegEffects + "</font>");
-				IconContainer.appendHtml("<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'> " + _selectedItem.AHZItemCardObj.NegEffects + "</font>");
+				IconContainer.appendImage("ahzPoison");
+				IconContainer.appendHtml("<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'>&nbsp;" + _selectedItem.AHZItemCardObj.NegEffects + "</font>");
 			}
 		}
 
@@ -854,23 +836,14 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			if (iconName && iconName.length)
 			{
 				customIcon = string(iconName);
-				IconContainer.AppendImage(customIcon);
+				IconContainer.appendImage(customIcon);
 			}
 			else
 			{
 				customIcon = string(_selectedItem.AHZItemIcon);
-				IconContainer.AppendImage(customIcon);
+				IconContainer.appendImage(customIcon);
 			}
 		}
-	}
-
-	function appendHtmlToEnd(htmlText:String, appendedHtml:String):String
-	{
-		var stringIndex:Number;
-		stringIndex = htmlText.lastIndexOf("</P></TEXTFORMAT>");
-		var firstText:String = htmlText.substr(0,stringIndex);
-		var secondText:String = htmlText.substr(stringIndex,htmlText.length - stringIndex);
-		return firstText + appendedHtml + secondText;
 	}
 
 	function interpolate(pBegin:Number, pEnd:Number, pMax:Number, pStep:Number):Number
@@ -887,7 +860,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
 	public function onLoadInit(s_mc: MovieClip): Void
 	{
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("CLIP LOADED: " + LoadedLargeItemCard_mc, true);
+		//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("CLIP LOADED: " + LoadedLargeItemCard_mc, false);
 		s_mc.gotoAndStop(0);
 
 		if (LoadedLargeItemCard_mc == s_mc)
@@ -906,7 +879,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
 	public function onLoadError(s_mc:MovieClip, a_errorCode: String): Void
 	{
-		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("CLIP ERROR: " + a_errorCode, false);
+		//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("CLIP ERROR: " + a_errorCode, false);
 		AttachIconHolder();
 		if (_config[AHZDefines.CFG_ICON_PATH])
 		{
