@@ -35,7 +35,7 @@ class AHZIconContainer
 		_currentImageIndex = 0;
 		_imageSubs = new Array();
 		loadedIcons = new Array();			
-		_lastX = _tf.getLineMetrics(0).x;
+		_lastX = (_tf.getLineMetrics(0).x + _tf._x);
 		updatePosition();
 	}
 	
@@ -141,11 +141,11 @@ class AHZIconContainer
 			Clear();
 			return;
 		}		
-		if (_tf.htmlText != textValue)
-		{
+		//if (_tf.htmlText != textValue)
+		//{
 			_tf.htmlText = textValue;
 			updatePosition();
-		}
+		//}
 	}
 	
 	public function get htmlText():String
@@ -178,14 +178,14 @@ class AHZIconContainer
 		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("    ~updatePosition Icons Loaded~ ", false);
 						
 		var newLineMetrics = _tf.getLineMetrics(0);
-		var xDelta = _lastX - newLineMetrics.x;
+		var xDelta = _lastX - (newLineMetrics.x + _tf._x);
 		for (var i = 0; i < _currentImageIndex; i++)
 		{
 			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("old loadedIcons["+i+"]._x: " + loadedIcons[i]._x, false);
 			loadedIcons[i]._x = loadedIcons[i]._x - (xDelta);
 			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("new loadedIcons["+i+"]._x: " + loadedIcons[i]._x, false);
 		}		
-		_lastX = newLineMetrics.x;
+		_lastX = (newLineMetrics.x + _tf._x);
 	}
 	
 	public function Load(s_filePath:String, a_scope: Object, a_loadedCallBack: String, a_errorCallBack: String):Void
@@ -247,9 +247,14 @@ class AHZIconContainer
 	private function appendHtmlToEnd(htmlText:String, appendedHtml:String):String
     {
         var stringIndex:Number;
-        stringIndex = htmlText.lastIndexOf("</P></TEXTFORMAT>");
+		stringIndex = htmlText.lastIndexOf("</FONT></P></TEXTFORMAT>");
+		if (stringIndex <0){
+        	stringIndex = htmlText.lastIndexOf("</P></TEXTFORMAT>");
+		}
         var firstText:String = htmlText.substr(0,stringIndex);
         var secondText:String = htmlText.substr(stringIndex,htmlText.length - stringIndex);
+		var textTemp = firstText + appendedHtml + secondText;
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("appendHtmlToEnd: " + textTemp, false);
         return firstText + appendedHtml + secondText;
     }
 
@@ -297,10 +302,10 @@ class AHZIconContainer
 				_global.skse.plugins.AHZmoreHUDInventory.AHZLog("SHIFT WITH THIS VALUE: " + _tf.text, false);
 				loadedIcons[_currentImageIndex].gotoAndStop(a_imageName);
 				loadedIcons[_currentImageIndex]._quality = "BEST";
-				loadedIcons[_currentImageIndex]._x = (currentLineMetrics.x + currentLineMetrics.width) + ICON_XOFFSET;
-				loadedIcons[_currentImageIndex]._y = _tf._y + (_tf._height - ICON_HEIGHT) - currentLineMetrics.descent;
 				loadedIcons[_currentImageIndex]._height = ICON_HEIGHT;
 				loadedIcons[_currentImageIndex]._width = ICON_WIDTH;
+				loadedIcons[_currentImageIndex]._x = (currentLineMetrics.x + currentLineMetrics.width) + ICON_XOFFSET + _tf._x ;
+				loadedIcons[_currentImageIndex]._y = _tf._y + (_tf._height - ICON_HEIGHT) - currentLineMetrics.descent;
 				updatePosition();
 				
 				if (_currentImageIndex < loadedIcons.length - 1)
@@ -328,6 +333,6 @@ class AHZIconContainer
 		}			
 		_currentImageIndex = 0;
 		_imageSubs = new Array();
-		_lastX = _tf.getLineMetrics(0).x;
+		_lastX = (_tf.getLineMetrics(0).x + _tf._x);
     }
 }

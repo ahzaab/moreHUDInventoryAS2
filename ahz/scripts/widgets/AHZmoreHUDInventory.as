@@ -708,13 +708,13 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 				_craftingMenuCardShifted = true;
 			}
 
-			//IconContainer.textWidth = this._width;
-			//IconContainer._x = this._x - (itemCard._parent._x + itemCard._x);
+			IconContainer.textWidth = this._width;
+			IconContainer._x = this._x - (itemCard._parent._x + itemCard._x);
 		}
 		else
 		{
-			//IconContainer._x = 0;
-			//IconContainer.textWidth = cardBackground._width;
+			IconContainer._x = 0;
+			IconContainer.textWidth = cardBackground._width;
 			_itemCardOverride = false;
 
 			// Shift back to normal
