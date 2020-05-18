@@ -8,8 +8,8 @@ class AHZIconContainer
   	private static var MAX_CONCURRENT_ICONS:Number = 32;
 	private static var ICON_WIDTH:Number = 20;
 	private static var ICON_HEIGHT:Number = 20;
-	private static var ICON_XOFFSET:Number = -7;
-	private static var ICON_YOFFSET:Number = -7;
+	private static var ICON_XOFFSET:Number = -6;//-7;
+	private static var ICON_YOFFSET:Number = 0;//-7;
 
 	/* Static */
 	private static var eventObject: Object;
@@ -24,6 +24,7 @@ class AHZIconContainer
 	private var _currentImageIndex:Number;
   	private var _tf:TextField;
   	private var _lastX:Number;
+	private var _textFormat:TextFormat;
 	
 	public function set textField(textFieldValue:TextField):Void
 	{
@@ -164,8 +165,22 @@ class AHZIconContainer
 		return _tf.html;
 	}	
 	
+	public function setNewTextFormat(tf:TextFormat) : Void
+	{
+		_textFormat = tf;
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("    ~setNewTextFormat~ " + tf,  false);
+		_tf.setNewTextFormat(tf);
+		updatePosition();
+	}
+	
   	public function AHZIconContainer()
 	{	
+	}
+	
+	public function appendHtml(newHtml:String):Void
+	{
+		_tf.appendHtml(newHtml);
+		updatePosition();
 	}
 	
 	function updatePosition ():Void {
@@ -184,6 +199,7 @@ class AHZIconContainer
 			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("old loadedIcons["+i+"]._x: " + loadedIcons[i]._x, false);
 			loadedIcons[i]._x = loadedIcons[i]._x - (xDelta);
 			_global.skse.plugins.AHZmoreHUDInventory.AHZLog("new loadedIcons["+i+"]._x: " + loadedIcons[i]._x, false);
+			loadedIcons[_currentImageIndex]._y = (_tf._y + _tf._height) - ( _tf._height/ 2) - (ICON_HEIGHT / 2);
 		}		
 		_lastX = (newLineMetrics.x + _tf._x);
 	}
@@ -247,10 +263,10 @@ class AHZIconContainer
 	private function appendHtmlToEnd(htmlText:String, appendedHtml:String):String
     {
         var stringIndex:Number;
-		stringIndex = htmlText.lastIndexOf("</FONT></P></TEXTFORMAT>");
-		if (stringIndex <0){
+		//stringIndex = htmlText.lastIndexOf("</FONT></P></TEXTFORMAT>");
+		//if (stringIndex <0){
         	stringIndex = htmlText.lastIndexOf("</P></TEXTFORMAT>");
-		}
+		//}
         var firstText:String = htmlText.substr(0,stringIndex);
         var secondText:String = htmlText.substr(stringIndex,htmlText.length - stringIndex);
 		var textTemp = firstText + appendedHtml + secondText;
@@ -258,13 +274,20 @@ class AHZIconContainer
         return firstText + appendedHtml + secondText;
     }
 
+	private function getDefaultHtml(textValue:String):String
+	{
+		var returnValue = "<font face=\'"+_textFormat.font+"\' size=\'"+_textFormat.size+"\' color=\'#"+_textFormat.color.toString(16)+"\'>" + textValue + "</font>";
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("returnValue: " + returnValue, false);
+		return returnValue;
+	}
+	
 	function AppendImage(a_imageName:String):Void
 	{		
 		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("~AppendImage~ " + a_imageName, false);
 		var loadedImage:BitmapData;
 		if (loadedIcons.length)
 		{
-	 		loadedImage = BitmapData.loadBitmap("dummy.png");
+	 		loadedImage = BitmapData.loadBitmap("ahzEmpty");
 		}
 		else
 		{		
@@ -289,7 +312,7 @@ class AHZIconContainer
 			var currentLineMetrics = _tf.getLineMetrics(0);
 			if (_tf.html) 
 			{
-				_tf.htmlText = appendHtmlToEnd(_tf.htmlText, "[" + a_imageName + "]");
+				_tf.appendHtml(getDefaultHtml("[" + a_imageName + "]"));
 			}
 			else
 			{
@@ -305,7 +328,7 @@ class AHZIconContainer
 				loadedIcons[_currentImageIndex]._height = ICON_HEIGHT;
 				loadedIcons[_currentImageIndex]._width = ICON_WIDTH;
 				loadedIcons[_currentImageIndex]._x = (currentLineMetrics.x + currentLineMetrics.width) + ICON_XOFFSET + _tf._x ;
-				loadedIcons[_currentImageIndex]._y = _tf._y + (_tf._height - ICON_HEIGHT) - currentLineMetrics.descent;
+				loadedIcons[_currentImageIndex]._y = (_tf._y + _tf._height) - ( _tf._height/ 2) - (ICON_HEIGHT / 2);
 				updatePosition();
 				
 				if (_currentImageIndex < loadedIcons.length - 1)

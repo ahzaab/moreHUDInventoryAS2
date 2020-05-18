@@ -46,6 +46,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 	private var _imageSubs:Array;
 	private var LoadedLargeItemCard_mc:MovieClip;
 	private var _config:Object;
+	private var _iconContainerTextFormat:TextFormat;
 	public var ICBackground_mc:MovieClip;
 	private var mcLoader:MovieClipLoader;
 
@@ -267,12 +268,12 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			tf.textAutoSize = "shrink";
 			tf.multiLine = false;
 			tf.border = true;
-			iconTextFormat = new TextFormat();
-			iconTextFormat.align = "center";
-			iconTextFormat.color = 0x999999;
-			iconTextFormat.size = 24;
-			iconTextFormat.font = "$EverywhereMediumFont";
-			tf.setNewTextFormat(iconTextFormat);
+			_iconContainerTextFormat = new TextFormat();
+			_iconContainerTextFormat.align = "center";
+			_iconContainerTextFormat.color = 0x999999;
+			_iconContainerTextFormat.size = 24;
+			_iconContainerTextFormat.font = "$EverywhereMediumFont";
+			tf.setNewTextFormat(_iconContainerTextFormat);
 			tf.text = "";
 
 			var filter:DropShadowFilter = new DropShadowFilter(2,45,0,100,2,2,1.5);
@@ -281,6 +282,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			tf.filters = filterArray;
 
 			IconContainer.textField = tf;
+			IconContainer.setNewTextFormat(_iconContainerTextFormat);
 		}
 	}
 
@@ -550,12 +552,12 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		IconContainer.textField.textAutoSize = "shrink";
 		IconContainer.textField.multiLine = false;
 		IconContainer.textField.border = true;
-		iconTextFormat = new TextFormat();
-		iconTextFormat.align = "center";
-		iconTextFormat.color = 0x999999;
-		iconTextFormat.size = 24;
-		iconTextFormat.font = "$EverywhereMediumFont";
-		IconContainer.textField.setNewTextFormat(iconTextFormat);
+		_iconContainerTextFormat = new TextFormat();
+		_iconContainerTextFormat.align = "center";
+		_iconContainerTextFormat.color = 0x999999;
+		_iconContainerTextFormat.size = 24;
+		_iconContainerTextFormat.font = "$EverywhereMediumFont";
+		IconContainer.setNewTextFormat(_iconContainerTextFormat);
 
 		var filter:DropShadowFilter = new DropShadowFilter(2,45,0,100,2,2,1.5);
 		var filterArray:Array = new Array();
@@ -820,10 +822,11 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 
 			if (_selectedItem.AHZItemCardObj.PosEffects > 0)
 			{
-				IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText, "<font face=\'$EverywhereBoldFont\' size=\'6\' color=\'"+_config[AHZDefines.CFG_ICON_POS_EFFECT_COLOR]+"\'> ");
+				//IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText, "<font face=\'$EverywhereBoldFont\' size=\'6\' color=\'"+_config[AHZDefines.CFG_ICON_POS_EFFECT_COLOR]+"\'> ");
 				IconContainer.AppendImage("ahzHealth");
-				IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText, "</font>");
-				IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText, "<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_POS_EFFECT_COLOR]+"\'> " + _selectedItem.AHZItemCardObj.PosEffects + "</font>");
+				//IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText, "</font>");
+				IconContainer.appendHtml("<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_POS_EFFECT_COLOR]+"\'> " + _selectedItem.AHZItemCardObj.PosEffects + "</font>");
+				//IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText, "<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_POS_EFFECT_COLOR]+"\'> " + _selectedItem.AHZItemCardObj.PosEffects + "</font>");
 
 			}
 			if (_selectedItem.AHZItemCardObj.NegEffects > 0)
@@ -831,12 +834,17 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 				// Add space if we have both
 				if (_selectedItem.AHZItemCardObj.PosEffects > 0)
 				{
-					IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText,"<font face=\'$EverywhereBoldFont\' size=\'10\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'>      </font>");
+					//IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText,"<font face=\'$EverywhereBoldFont\' size=\'10\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'>      </font>");
+					//IconContainer.appendHtml("<font face=\'$EverywhereBoldFont\' size=\'10\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'>\t</font>");
+					// For spacing
+					IconContainer.AppendImage("ahzEmpty");
 				}
-				IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText,"<font face=\'$EverywhereBoldFont\' size=\'6\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'> ");
+				
+				//IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText,"<font face=\'$EverywhereBoldFont\' size=\'6\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'> ");
 				IconContainer.AppendImage("ahzPoison");
-				IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText, "</font>");
-				IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText,"<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'> " + _selectedItem.AHZItemCardObj.NegEffects + "</font>");
+				//IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText, "</font>");
+				//IconContainer.htmlText = appendHtmlToEnd(IconContainer.htmlText,"<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'> " + _selectedItem.AHZItemCardObj.NegEffects + "</font>");
+				IconContainer.appendHtml("<font face=\'$EverywhereBoldFont\' size=\'18\' color=\'"+_config[AHZDefines.CFG_ICON_NEG_EFFECT_COLOR]+"\'> " + _selectedItem.AHZItemCardObj.NegEffects + "</font>");
 			}
 		}
 
