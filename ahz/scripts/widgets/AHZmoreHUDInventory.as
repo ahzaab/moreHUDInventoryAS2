@@ -59,6 +59,7 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 	private static var AHZ_FontScale:Number         = 0.90;
 	private static var AHZ_CraftingMenuYShift:Number = -25;
 	private static var AHZ_NormalALPHA:Number = 60;
+	private static var AHZ_IconsFile:String = 'AHZmoreHUDIE_baseIcons.swf'
 
 	// Types from ItemCard
 	private static var ICT_ARMOR: Number            = 1;
@@ -844,6 +845,21 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 				IconContainer.appendImage(customIcon);
 			}
 		}
+		
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("_selectedItem.AHZdbmNew: " + _selectedItem.AHZdbmNew, false);
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("  _selectedItem.formId: " + _selectedItem.formId.toString(16), false);
+		if (_selectedItem.AHZdbmNew)
+		{
+			IconContainer.appendImage("dbmNew");
+		}		
+		
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("_selectedItem.AHZdbmDisp: " + _selectedItem.AHZdbmDisp, false);
+		_global.skse.plugins.AHZmoreHUDInventory.AHZLog("  _selectedItem.formId: " + _selectedItem.formId.toString(16), false);
+		if (_selectedItem.AHZdbmDisp)
+		{
+			IconContainer.appendImage("dbmDisp");
+		}	
+		
 	}
 
 	function interpolate(pBegin:Number, pEnd:Number, pMax:Number, pStep:Number):Number
