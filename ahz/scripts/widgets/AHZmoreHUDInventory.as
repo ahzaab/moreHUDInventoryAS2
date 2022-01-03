@@ -117,11 +117,16 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		
 		if (itemCard.itemInfo.type == ICT_CRAFT_ENCHANTING || itemCard.itemInfo.type == ICT_HOUSE_PART)
 		{
+			var background_mc:MovieClip;
 			if (itemCard.itemInfo.effects != undefined && itemCard.itemInfo.effects.length > 0) {
-				return itemCard.Enchanting_Background;
+				background_mc = itemCard.Enchanting_Background;
 			} else {
-				return itemCard.Enchanting_Slim_Background;
+				background_mc = itemCard.Enchanting_Slim_Background;
 			}	
+			if (background_mc)
+			{
+				return background_mc;
+			}
 		}
 		
 		if (itemCard["background"])
@@ -300,7 +305,8 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			//tf.border = true;
 			_iconContainerTextFormat = new TextFormat();
 			_iconContainerTextFormat.align = "center";
-			_iconContainerTextFormat.color = 0x999999;
+			var withoutHash = _config[AHZDefines.CFG_ICON_TEXT_FIELD_COLOR].substr(1,_config[AHZDefines.CFG_ICON_TEXT_FIELD_COLOR].length-1);
+			_iconContainerTextFormat.color = parseInt(withoutHash, 16);
 			_iconContainerTextFormat.size = 24;
 			_iconContainerTextFormat.font = "$EverywhereMediumFont";
 			tf.setNewTextFormat(_iconContainerTextFormat);
@@ -380,6 +386,9 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 			
 		if (!_config[AHZDefines.CFG_LIC_DESCRIPTION_EXTRADATA_PADDING])
 			_config[AHZDefines.CFG_LIC_DESCRIPTION_EXTRADATA_PADDING] = 5;			
+			
+		if (!_config[AHZDefines.CFG_ICON_TEXT_FIELD_COLOR])
+			_config[AHZDefines.CFG_ICON_TEXT_FIELD_COLOR] = '#999999';
 	}
 
 	function configLoaded(event:Object):Void
@@ -683,7 +692,8 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		//IconContainer.textField.border = true;
 		_iconContainerTextFormat = new TextFormat();
 		_iconContainerTextFormat.align = "center";
-		_iconContainerTextFormat.color = 0x999999;
+		var withoutHash = _config[AHZDefines.CFG_ICON_TEXT_FIELD_COLOR].substr(1,_config[AHZDefines.CFG_ICON_TEXT_FIELD_COLOR].length-1);
+		_iconContainerTextFormat.color = parseInt(withoutHash, 16);
 		_iconContainerTextFormat.size = 24;
 		_iconContainerTextFormat.font = "$EverywhereMediumFont";
 		IconContainer.setNewTextFormat(_iconContainerTextFormat);
@@ -963,7 +973,12 @@ class ahz.scripts.widgets.AHZmoreHUDInventory extends MovieClip
 		
 		if (_selectedItem.AHZItemCardObj.enchantmentKnown)
 		{
-			IconContainer.appendImage("ahzKnown");
+			if (_selectedItem.AHZItemCardObj.enchantmentKnown == 1){
+				IconContainer.appendImage("ahzKnown");
+			}
+			if (_selectedItem.AHZItemCardObj.enchantmentKnown == 2){
+				IconContainer.appendImage("ahzEnch");
+			}			
 		}
 		// Fortunately, extraData is not required for getting the Book Read Status.  This allows us to check
 		// it in real time and make sure the read status is accurate
